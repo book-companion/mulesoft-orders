@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+<http:listener-config name="httpListenerConfig"><http:listener-connection host="127.0.0.1" port="18081"/></http:listener-config>
+<db:config name="Orders_DB"><db:generic-connection url="jdbc:h2:mem:orders;DB_CLOSE_DELAY=-1" driverClassName="org.h2.Driver" user="sa" password="#['']"/></db:config>
+<file:config name="Order_Files"><file:connection workingDir="${mule.home}/orders-data"/></file:config>
+<flow name="helloFlow"><http:listener config-ref="httpListenerConfig" path="/hello"/><set-payload value="Hello, Mule!"/></flow>
+<flow name="orderSummary"><http:listener config-ref="httpListenerConfig" path="/orders" allowedMethods="POST"/><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ id: payload.orderId, total: sum(payload.items map ($.price * $.qty)) }
+]]></ee:set-payload></ee:message></ee:transform></flow>
+<flow name="dbSetup"><http:listener config-ref="httpListenerConfig" path="/lab/db/setup" allowedMethods="POST"/><db:execute-ddl config-ref="Orders_DB"><db:sql>CREATE TABLE IF NOT EXISTS orders (order_id VARCHAR(40) PRIMARY KEY, customer VARCHAR(80), total DECIMAL(12,2))</db:sql></db:execute-ddl><db:delete config-ref="Orders_DB"><db:sql>DELETE FROM orders</db:sql></db:delete><set-payload value="ready"/></flow>
+<flow name="dbInsert"><http:listener config-ref="httpListenerConfig" path="/lab/db/orders" allowedMethods="POST"/><db:insert config-ref="Orders_DB" target="insertResult"><db:sql>INSERT INTO orders(order_id,customer,total) VALUES (:id,:customer,:total)</db:sql><db:input-parameters>#[{id:payload.orderId,customer:payload.customer,total:payload.total}]</db:input-parameters></db:insert><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{order: payload.orderId, result: vars.insertResult}
+]]></ee:set-payload></ee:message></ee:transform></flow>
+<flow name="dbSelect"><http:listener config-ref="httpListenerConfig" path="/lab/db/orders/{id}" allowedMethods="GET"/><db:select config-ref="Orders_DB"><db:sql>SELECT order_id AS "id", customer AS "customer", total AS "total" FROM orders WHERE order_id = :id</db:sql><db:input-parameters>#[{id:attributes.uriParams.id}]</db:input-parameters></db:select><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload
+]]></ee:set-payload></ee:message></ee:transform></flow>
+<flow name="dbRollback"><http:listener config-ref="httpListenerConfig" path="/lab/db/rollback"/><try transactionalAction="ALWAYS_BEGIN" transactionType="LOCAL"><db:insert config-ref="Orders_DB" transactionalAction="ALWAYS_JOIN"><db:sql>INSERT INTO orders(order_id,customer,total) VALUES ('ROLLBACK','Dana',32)</db:sql></db:insert><raise-error type="APP:REJECTED" description="Injected failure"/><error-handler><on-error-propagate type="APP:REJECTED"/></error-handler></try><error-handler><on-error-continue type="APP:REJECTED"><set-payload value="rolled back"/></on-error-continue></error-handler></flow>
+<flow name="deferred"><http:listener config-ref="httpListenerConfig" path="/lab/deferred" allowedMethods="POST"/><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+input payload application/json streaming=true
+output application/json deferred=true
+---
+payload map (order) -> {id:order.orderId,total:order.total}
+]]></ee:set-payload></ee:message></ee:transform></flow>
+<flow name="fileRoundtrip"><http:listener config-ref="httpListenerConfig" path="/lab/files" allowedMethods="POST"/><file:write config-ref="Order_Files" path="order.json"><file:content>#[output application/json --- payload]</file:content></file:write><file:read config-ref="Order_Files" path="order.json" outputMimeType="application/json"/><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{orderId:payload.orderId,path:attributes.fileName}
+]]></ee:set-payload></ee:message></ee:transform></flow>
+
+<flow name="targetCaller"><http:listener config-ref="httpListenerConfig" path="/lab/target"/><set-payload value="before"/><set-variable variableName="marker" value="original"/><flow-ref name="targetChild" target="childResult"/><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{payload:payload,marker:vars.marker,result:vars.childResult}
+]]></ee:set-payload></ee:message></ee:transform></flow>
+<sub-flow name="targetChild"><set-payload value="after"/><set-variable variableName="marker" value="changed"/></sub-flow>
+<flow name="routes"><http:listener config-ref="httpListenerConfig" path="/lab/routes"/><scatter-gather><route><set-payload value="inventory"/></route><route><set-payload value="customer"/></route></scatter-gather><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{first:payload[0].payload,second:payload[1].payload}
+]]></ee:set-payload></ee:message></ee:transform></flow>
+<flow name="parallel"><http:listener config-ref="httpListenerConfig" path="/lab/parallel"/><set-payload value="#[[1,2,3]]"/><parallel-foreach><set-payload value="#[payload * 2]"/></parallel-foreach><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map $.payload
+]]></ee:set-payload></ee:message></ee:transform></flow>
+<flow name="javaFormat"><http:listener config-ref="httpListenerConfig" path="/lab/java"/><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{integer:42,decimal:1.5}
+]]></ee:set-payload></ee:message></ee:transform><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{integerClass:payload.integer.^class,decimalClass:payload.decimal.^class}
+]]></ee:set-payload></ee:message></ee:transform></flow>
+<flow name="xlsxFormat"><http:listener config-ref="httpListenerConfig" path="/lab/xlsx"/><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var bytes = write({Orders:[{id:"A-1001",total:32}]},"application/xlsx")
+---
+read(bytes,"application/xlsx")
+]]></ee:set-payload></ee:message></ee:transform></flow>
+<flow name="flatfileFormat"><http:listener config-ref="httpListenerConfig" path="/lab/flatfile"/><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+readUrl("classpath://customers.txt", "application/flatfile", {schemaPath:"customers.ffd"})
+]]></ee:set-payload></ee:message></ee:transform></flow>
+</mule>

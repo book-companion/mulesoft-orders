@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "actual": {
+    "payload": "before",
+    "marker": "original",
+    "result": "after"
+  },
+  "expected": {
+    "payload": "before",
+    "marker": "original",
+    "result": "after"
+  }
+}

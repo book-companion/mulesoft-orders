@@ -1,0 +1,27 @@
+{
+  "status": 200,
+  "actual": [
+    {
+      "amountCents": 12950,
+      "customerId": "4021",
+      "name": "Dana Lopez"
+    },
+    {
+      "amountCents": 4999,
+      "customerId": "4022",
+      "name": "Sam Okafor"
+    }
+  ],
+  "expected": [
+    {
+      "amountCents": 12950,
+      "customerId": "4021",
+      "name": "Dana Lopez"
+    },
+    {
+      "amountCents": 4999,
+      "customerId": "4022",
+      "name": "Sam Okafor"
+    }
+  ]
+}

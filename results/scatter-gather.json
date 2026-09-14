@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "actual": {
+    "first": "inventory",
+    "second": "customer"
+  },
+  "expected": {
+    "first": "inventory",
+    "second": "customer"
+  }
+}

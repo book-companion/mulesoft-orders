@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "actual": {
+    "integerClass": "java.lang.Integer",
+    "decimalClass": "java.lang.Double"
+  },
+  "expected": {
+    "integerClass": "java.lang.Integer",
+    "decimalClass": "java.lang.Double"
+  }
+}

@@ -1,0 +1,7 @@
+form: FIXEDWIDTH
+id: Customers
+name: Customers
+values:
+- { name: customerId, type: String, length: 10 }
+- { name: name, type: String, length: 30 }
+- { name: amountCents, type: Integer, length: 12 }

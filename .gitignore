@@ -1,0 +1,8 @@
+# Build and runtime artefacts. Sources, fixtures and the saved results/ records are tracked.
+target/
+munit/target/
+.mule/
+*.log
+.DS_Store
+__pycache__/
+*.pyc

@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "actual": {
+    "id": "A-1001",
+    "total": 32
+  },
+  "expected": {
+    "id": "A-1001",
+    "total": 32
+  }
+}

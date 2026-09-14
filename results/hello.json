@@ -1,0 +1,5 @@
+{
+  "status": 200,
+  "actual": "Hello, Mule!",
+  "expected": "Hello, Mule!"
+}

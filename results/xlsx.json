@@ -1,0 +1,19 @@
+{
+  "status": 200,
+  "actual": {
+    "Orders": [
+      {
+        "id": "A-1001",
+        "total": 32
+      }
+    ]
+  },
+  "expected": {
+    "Orders": [
+      {
+        "id": "A-1001",
+        "total": 32
+      }
+    ]
+  }
+}

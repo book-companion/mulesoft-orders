@@ -1,0 +1,17 @@
+{
+  "status": 200,
+  "actual": [
+    {
+      "id": "A-VERIFY",
+      "customer": "Dana",
+      "total": 32
+    }
+  ],
+  "expected": [
+    {
+      "id": "A-VERIFY",
+      "customer": "Dana",
+      "total": 32
+    }
+  ]
+}
