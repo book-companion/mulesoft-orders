@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+    xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+      http://www.mulesoft.org/schema/mule/munit-tools http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+  <munit:config name="MUnit"/>
+  <munit:dynamic-port propertyName="http.port"/>
+  <munit:test name="retains-order-and-customer">
+    <munit:behavior>
+      <munit:set-event><munit:payload mediaType="application/json" value="#[output application/json --- {&quot;orderId&quot;: &quot;A-1001&quot;, &quot;customer&quot;: {&quot;id&quot;: &quot;C-42&quot;, &quot;name&quot;: &quot;Dana&quot;}, &quot;items&quot;: [{&quot;sku&quot;: &quot;PEN-01&quot;, &quot;price&quot;: 2.5, &quot;qty&quot;: 4}, {&quot;sku&quot;: &quot;PAD-22&quot;, &quot;price&quot;: 6, &quot;qty&quot;: 2}, {&quot;sku&quot;: &quot;CLP-08&quot;, &quot;price&quot;: 1, &quot;qty&quot;: 10}]}]"/></munit:set-event>
+      <munit-tools:mock-when processor="http:request">
+        <munit-tools:with-attributes><munit-tools:with-attribute attributeName="target" whereValue="#['customer']"/></munit-tools:with-attributes>
+        <munit-tools:then-return><munit-tools:variables><munit-tools:variable key="customer" value="#[{name: 'Dana', status: 'ACTIVE'}]"/></munit-tools:variables></munit-tools:then-return>
+      </munit-tools:mock-when>
+    </munit:behavior>
+    <munit:execution><flow-ref name="enrich-order"/></munit:execution>
+    <munit:validation>
+      <munit-tools:assert-that expression="#[payload.orderId]" is="#[MunitTools::equalTo(&#x27;A-1001&#x27;)]"/>
+      <munit-tools:assert-that expression="#[payload.customer]" is="#[MunitTools::equalTo('Dana')]"/>
+      <munit-tools:verify-call processor="http:request" times="1"/>
+    </munit:validation>
+  </munit:test>
+</mule>

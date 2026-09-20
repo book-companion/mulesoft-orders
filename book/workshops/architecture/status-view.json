@@ -1,0 +1,7 @@
+{
+  "orderId": "STATUS-2001",
+  "tenantId": "retailer-a",
+  "orderStatus": "SHIPPED",
+  "shipment": null,
+  "shipmentAvailable": false
+}

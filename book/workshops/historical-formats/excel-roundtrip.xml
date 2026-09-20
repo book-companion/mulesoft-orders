@@ -1,0 +1,7 @@
+<!-- Historical excerpt. Complete project: repository root; runtime evidence: results/. -->
+<flow name="xlsxFormat"><http:listener config-ref="httpListenerConfig" path="/lab/xlsx"/><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var bytes = write({Orders:[{id:"A-1001",total:32}]},"application/xlsx")
+---
+read(bytes,"application/xlsx")
+]]></ee:set-payload></ee:message></ee:transform></flow>

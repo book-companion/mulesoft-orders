@@ -1,0 +1,6 @@
+<!-- Historical excerpt. Complete project: repository root; runtime evidence: results/. -->
+<flow name="flatfileFormat"><http:listener config-ref="httpListenerConfig" path="/lab/flatfile"/><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+readUrl("classpath://customers.txt", "application/flatfile", {schemaPath:"customers.ffd"})
+]]></ee:set-payload></ee:message></ee:transform></flow>

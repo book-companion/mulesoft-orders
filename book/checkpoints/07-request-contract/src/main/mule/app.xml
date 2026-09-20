@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:http="http://www.mulesoft.org/schema/mule/http"
+    xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+      http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+  <http:listener-config name="HTTP_Listener">
+    <http:listener-connection host="127.0.0.1" port="18881"/>
+  </http:listener-config>
+  <flow name="hello-mule">
+    <http:listener config-ref="HTTP_Listener" path="/hello" allowedMethods="GET"/>
+    <set-payload value="Hello, Mule!"/>
+  </flow>
+  <flow name="validate-request">
+    <http:listener config-ref="HTTP_Listener" path="/validate" allowedMethods="POST">
+      <http:response statusCode="#[vars.httpStatus default 200]"/>
+      <http:error-response statusCode="#[vars.httpStatus default 500]">
+        <http:body>#[payload]</http:body>
+      </http:error-response>
+    </http:listener>
+    <choice>
+      <when expression="#[payload.orderId is String and
+      payload.items is Array and
+      (not isEmpty(payload.items)) and
+      isEmpty(payload.items filter (item) -&gt; not (item.qty is Number and item.qty &gt; 0 and floor(item.qty) == item.qty))]">
+        <ee:transform>
+          <ee:message>
+            <ee:set-payload><![CDATA[%dw 2.0
+        output application/json
+        ---
+        {orderId: payload.orderId, valid: true}
+        ]]></ee:set-payload>
+          </ee:message>
+        </ee:transform>
+      </when>
+      <otherwise>
+        <set-variable variableName="httpStatus" value="#[400]"/>
+        <ee:transform>
+          <ee:message>
+            <ee:set-payload><![CDATA[%dw 2.0
+        output application/json
+        ---
+        {error: "INVALID_ORDER"}
+        ]]></ee:set-payload>
+          </ee:message>
+        </ee:transform>
+      </otherwise>
+    </choice>
+  </flow>
+</mule>

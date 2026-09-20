@@ -1,0 +1,10 @@
+<!-- Historical excerpt. Complete project: repository root; runtime evidence: results/. -->
+<flow name="javaFormat"><http:listener config-ref="httpListenerConfig" path="/lab/java"/><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{integer:42,decimal:1.5}
+]]></ee:set-payload></ee:message></ee:transform><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{integerClass:payload.integer.^class,decimalClass:payload.decimal.^class}
+]]></ee:set-payload></ee:message></ee:transform></flow>

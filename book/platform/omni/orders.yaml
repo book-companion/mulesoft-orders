@@ -1,0 +1,22 @@
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: ApiInstance
+metadata:
+  name: local-orders
+spec:
+  address: http://0.0.0.0:8080
+  services:
+    orders:
+      address: http://host.docker.internal:18881/
+      routes:
+        - rules:
+            - path: /api/orders(/.*)
+  policies:
+    - policyRef:
+        name: rate-limiting-flex
+      config:
+        rateLimits:
+          - maximumRequests: 5
+            timePeriodInMilliseconds: 60000
+        keySelector: "#[attributes.method]"
+        clusterizable: false
+        exposeHeaders: true

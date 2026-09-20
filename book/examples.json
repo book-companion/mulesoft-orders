@@ -1,0 +1,1903 @@
+[
+  {
+    "slug": "hello-mule",
+    "title": "Hello Mule",
+    "checkpoint": 1,
+    "source": "checkpoints/01-hello/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<mule xmlns=\"http://www.mulesoft.org/schema/mule/core\"\n    xmlns:http=\"http://www.mulesoft.org/schema/mule/http\"\n    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n    xsi:schemaLocation=\"\n      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd\n      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd\">\n  <http:listener-config name=\"HTTP_Listener\">\n    <http:listener-connection host=\"127.0.0.1\" port=\"18881\"/>\n  </http:listener-config>\n  <flow name=\"hello-mule\">\n    <http:listener config-ref=\"HTTP_Listener\" path=\"/hello\" allowedMethods=\"GET\"/>\n    <set-payload value=\"Hello, Mule!\"/>\n  </flow>\n</mule>",
+    "status": "local-runtime-verified",
+    "number": 1,
+    "chapter": 1,
+    "sha256": "b196174b52d4142ff564070cb25d0d95bf97614db29813752835cc7509d7a09e",
+    "prerequisites": [],
+    "fixtures": [],
+    "verification": {
+      "command": "python3 book/run.py verify 1",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "GET /hello returns 200 and Hello, Mule!"
+  },
+  {
+    "slug": "change-greeting",
+    "title": "Change the greeting",
+    "source": "variants/change-greeting.xml",
+    "language": "xml",
+    "code": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<mule xmlns=\"http://www.mulesoft.org/schema/mule/core\"\n    xmlns:http=\"http://www.mulesoft.org/schema/mule/http\"\n    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n    xsi:schemaLocation=\"\n      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd\n      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd\">\n  <http:listener-config name=\"HTTP_Listener\">\n    <http:listener-connection host=\"127.0.0.1\" port=\"18881\"/>\n  </http:listener-config>\n  <flow name=\"hello-mule\">\n    <http:listener config-ref=\"HTTP_Listener\" path=\"/hello\" allowedMethods=\"GET\"/>\n    <set-payload value=\"Hello, Dana!\"/>\n  </flow>\n</mule>",
+    "status": "local-runtime-verified",
+    "number": 2,
+    "chapter": 1,
+    "sha256": "465a6f02cccc791239d2bae8860314ed460b373439ee98d7d21c4b075dfd5869",
+    "prerequisites": [],
+    "fixtures": [],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "After replacing the greeting source, GET /hello returns Hello, Dana!"
+  },
+  {
+    "slug": "inspect-request",
+    "title": "Inspect an incoming request",
+    "checkpoint": 2,
+    "source": "checkpoints/02-event/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"inspect-request\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/inspect/{orderId}\" allowedMethods=\"POST\"/>\n  <set-payload value=\"#[attributes.uriParams.orderId]\"/>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 3,
+    "chapter": 2,
+    "sha256": "943665f6bc7f2ac18b87d292c7c03da3e83e9c0fe584634615a3c9cff78e5211",
+    "prerequisites": [
+      "chapter-01"
+    ],
+    "fixtures": [],
+    "verification": {
+      "command": "python3 book/run.py verify 2",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "POST /inspect/A-1001 returns the URI identity A-1001"
+  },
+  {
+    "slug": "replace-response-body",
+    "title": "Replace the response body",
+    "checkpoint": 2,
+    "source": "checkpoints/02-event/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"replace-response-body\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/replace\" allowedMethods=\"POST\"/>\n  <logger level=\"INFO\" message=\"Inspect payload before Set Payload in the debugger\"/>\n  <set-payload value=\"Request received\"/>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 4,
+    "chapter": 2,
+    "sha256": "943665f6bc7f2ac18b87d292c7c03da3e83e9c0fe584634615a3c9cff78e5211",
+    "prerequisites": [
+      "chapter-01"
+    ],
+    "fixtures": [],
+    "verification": {
+      "command": "python3 book/run.py verify 2",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "POST /replace returns Request received"
+  },
+  {
+    "slug": "read-order-header",
+    "title": "Read an order header",
+    "checkpoint": 3,
+    "source": "checkpoints/03-one-response/src/main/mule/app.xml",
+    "language": "dataweave",
+    "code": "%dw 2.0\n  output application/json\n  ---\n  {reference: payload.orderId, buyer: payload.customer.name}",
+    "status": "local-runtime-verified",
+    "number": 5,
+    "chapter": 3,
+    "sha256": "691c4c222385cb9aeec86232d73e5e46c9492b4b86d165ac3a9b4fb4ed8eea2a",
+    "prerequisites": [
+      "chapter-02"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 3",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Order header becomes reference A-1001 and buyer Dana"
+  },
+  {
+    "slug": "calculate-line",
+    "title": "Calculate one line",
+    "checkpoint": 3,
+    "source": "checkpoints/03-one-response/src/main/mule/app.xml",
+    "language": "dataweave",
+    "code": "%dw 2.0\n  output application/json\n  ---\n  {lineTotal: payload.price * payload.qty}",
+    "status": "local-runtime-verified",
+    "number": 6,
+    "chapter": 3,
+    "sha256": "691c4c222385cb9aeec86232d73e5e46c9492b4b86d165ac3a9b4fb4ed8eea2a",
+    "prerequisites": [
+      "chapter-02"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 3",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "2.5 times 4 produces numeric lineTotal 10"
+  },
+  {
+    "slug": "convert-line-price",
+    "title": "Convert a supplier price",
+    "checkpoint": 3,
+    "source": "checkpoints/03-one-response/src/main/mule/app.xml",
+    "language": "dataweave",
+    "code": "%dw 2.0\n  output application/json\n  ---\n  {lineTotal: (payload.price as Number) * payload.qty}",
+    "status": "local-runtime-verified",
+    "number": 7,
+    "chapter": 3,
+    "sha256": "691c4c222385cb9aeec86232d73e5e46c9492b4b86d165ac3a9b4fb4ed8eea2a",
+    "prerequisites": [
+      "chapter-02"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 3",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Text price 2.5 is explicitly converted before numeric lineTotal 10"
+  },
+  {
+    "slug": "calculate-lines",
+    "title": "Calculate every line",
+    "checkpoint": 4,
+    "source": "checkpoints/04-order-lines/src/main/mule/app.xml",
+    "language": "dataweave",
+    "code": "%dw 2.0\n  output application/json\n  ---\n  payload.items map (item) -> {sku: item.sku, lineTotal: item.price * item.qty}",
+    "status": "local-runtime-verified",
+    "number": 8,
+    "chapter": 4,
+    "sha256": "87dc1ab13a179895b575511121c29226c4112cc370420a6843df41366f6cfdd2",
+    "prerequisites": [
+      "chapter-03"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 4",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Three line totals are 10, 12, 10"
+  },
+  {
+    "slug": "order-total",
+    "title": "Calculate the order total",
+    "checkpoint": 4,
+    "source": "checkpoints/04-order-lines/src/main/mule/app.xml",
+    "language": "dataweave",
+    "code": "%dw 2.0\n  output application/json\n  ---\n  {orderId: payload.orderId, total: sum(payload.items map (item) -> item.price * item.qty)}",
+    "status": "local-runtime-verified",
+    "number": 9,
+    "chapter": 4,
+    "sha256": "87dc1ab13a179895b575511121c29226c4112cc370420a6843df41366f6cfdd2",
+    "prerequisites": [
+      "chapter-03"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 4",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "A-1001 totals 32; the empty calculation totals zero"
+  },
+  {
+    "slug": "keep-order-context",
+    "title": "Keep the order identifier",
+    "checkpoint": 5,
+    "source": "checkpoints/05-context-and-subflows/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"keep-order-context\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/context\" allowedMethods=\"POST\"/>\n  <set-variable variableName=\"orderId\" value=\"#[payload.orderId]\"/>\n  <set-payload value=\"lookup complete\"/>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  {orderId: vars.orderId, lookup: payload}\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 10,
+    "chapter": 5,
+    "sha256": "c73ca324e1a3dcc3633d7d7a641b0c78802bd3497d52ec0e1147c939f7d7cf36",
+    "prerequisites": [
+      "chapter-04"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 5",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Order identity survives replacement payload lookup complete"
+  },
+  {
+    "slug": "calculate-total",
+    "title": "Extract the total calculation",
+    "checkpoint": 5,
+    "source": "checkpoints/05-context-and-subflows/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<sub-flow name=\"calculate-total\">\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  {orderId: payload.orderId, total: sum(payload.items map (item) -> item.price * item.qty)}\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</sub-flow>",
+    "status": "local-runtime-verified",
+    "number": 11,
+    "chapter": 5,
+    "sha256": "c73ca324e1a3dcc3633d7d7a641b0c78802bd3497d52ec0e1147c939f7d7cf36",
+    "prerequisites": [
+      "chapter-04"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 5",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "The subflow calculates 32 from the three item lines"
+  },
+  {
+    "slug": "call-total",
+    "title": "Call the calculation",
+    "checkpoint": 5,
+    "source": "checkpoints/05-context-and-subflows/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"call-total\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/total\" allowedMethods=\"POST\"/>\n  <flow-ref name=\"calculate-total\"/>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 12,
+    "chapter": 5,
+    "sha256": "c73ca324e1a3dcc3633d7d7a641b0c78802bd3497d52ec0e1147c939f7d7cf36",
+    "prerequisites": [
+      "chapter-04"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 5",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "The caller returns orderId A-1001 and total 32"
+  },
+  {
+    "slug": "change-child-event",
+    "title": "Change the child event",
+    "checkpoint": 5,
+    "source": "checkpoints/05-context-and-subflows/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<sub-flow name=\"change-child-event\">\n  <set-payload value=\"after\"/>\n  <set-variable variableName=\"stage\" value=\"#[&#x27;child&#x27;]\"/>\n</sub-flow>",
+    "status": "local-runtime-verified",
+    "number": 13,
+    "chapter": 5,
+    "sha256": "c73ca324e1a3dcc3633d7d7a641b0c78802bd3497d52ec0e1147c939f7d7cf36",
+    "prerequisites": [
+      "chapter-04"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 5",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "The child changes payload to after and stage to child inside the referenced execution"
+  },
+  {
+    "slug": "targeted-subflow",
+    "title": "Retain a subflow result",
+    "checkpoint": 5,
+    "source": "checkpoints/05-context-and-subflows/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"targeted-subflow\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/target\" allowedMethods=\"GET\"/>\n  <set-payload value=\"before\"/>\n  <set-variable variableName=\"stage\" value=\"#[&#x27;caller&#x27;]\"/>\n  <flow-ref name=\"change-child-event\" target=\"childResult\"/>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  {payload: payload, stage: vars.stage, result: vars.childResult}\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 14,
+    "chapter": 5,
+    "sha256": "c73ca324e1a3dcc3633d7d7a641b0c78802bd3497d52ec0e1147c939f7d7cf36",
+    "prerequisites": [
+      "chapter-04"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 5",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Caller payload before and stage caller are restored; result contains after"
+  },
+  {
+    "slug": "first-munit-suite",
+    "title": "Check the greeting and total",
+    "checkpoint": 6,
+    "source": "checkpoints/06-first-tests/src/test/munit/app-test.xml",
+    "language": "xml",
+    "code": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<mule xmlns=\"http://www.mulesoft.org/schema/mule/core\"\n    xmlns:munit=\"http://www.mulesoft.org/schema/mule/munit\"\n    xmlns:munit-tools=\"http://www.mulesoft.org/schema/mule/munit-tools\"\n    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n    xsi:schemaLocation=\"\n      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd\n      http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd\n      http://www.mulesoft.org/schema/mule/munit-tools http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd\">\n  <munit:config name=\"MUnit\"/>\n  <munit:dynamic-port propertyName=\"http.port\"/>\n  <munit:test name=\"hello-test\">\n    <munit:execution><flow-ref name=\"hello-mule\"/></munit:execution>\n    <munit:validation>\n      <munit-tools:assert-that expression=\"#[payload]\" is=\"#[MunitTools::equalTo(&#x27;Hello, Mule!&#x27;)]\"/>\n    </munit:validation>\n  </munit:test>\n  <munit:test name=\"total-test\">\n    <munit:behavior>\n      <munit:set-event><munit:payload mediaType=\"application/json\" value=\"#[output application/json --- {&quot;orderId&quot;: &quot;A-1001&quot;, &quot;customer&quot;: {&quot;id&quot;: &quot;C-42&quot;, &quot;name&quot;: &quot;Dana&quot;}, &quot;items&quot;: [{&quot;sku&quot;: &quot;PEN-01&quot;, &quot;price&quot;: 2.5, &quot;qty&quot;: 4}, {&quot;sku&quot;: &quot;PAD-22&quot;, &quot;price&quot;: 6, &quot;qty&quot;: 2}, {&quot;sku&quot;: &quot;CLP-08&quot;, &quot;price&quot;: 1, &quot;qty&quot;: 10}]}]\"/></munit:set-event>\n\n    </munit:behavior>\n    <munit:execution><flow-ref name=\"order-total\"/></munit:execution>\n    <munit:validation>\n      <munit-tools:assert-that expression=\"#[payload.total]\" is=\"#[MunitTools::equalTo(32)]\"/>\n    </munit:validation>\n  </munit:test>\n</mule>",
+    "status": "local-runtime-verified",
+    "number": 15,
+    "chapter": 6,
+    "sha256": "19c23054d00b55a52b8b1b2cd5ec4420f1399b033af77a0be6e7b1ad718acc68",
+    "prerequisites": [
+      "chapter-05"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 6",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Two MUnit tests pass; changing expected 32 to 31 makes one assertion fail"
+  },
+  {
+    "slug": "validate-request",
+    "title": "Validate an order request",
+    "checkpoint": 7,
+    "source": "checkpoints/07-request-contract/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"validate-request\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/validate\" allowedMethods=\"POST\">\n    <http:response statusCode=\"#[vars.httpStatus default 200]\"/>\n    <http:error-response statusCode=\"#[vars.httpStatus default 500]\">\n      <http:body>#[payload]</http:body>\n    </http:error-response>\n  </http:listener>\n  <choice>\n    <when expression=\"#[payload.orderId is String and\n    payload.items is Array and\n    (not isEmpty(payload.items)) and\n    isEmpty(payload.items filter (item) -&gt; not (item.qty is Number and item.qty &gt; 0 and floor(item.qty) == item.qty))]\">\n      <ee:transform>\n        <ee:message>\n          <ee:set-payload><![CDATA[%dw 2.0\n      output application/json\n      ---\n      {orderId: payload.orderId, valid: true}\n      ]]></ee:set-payload>\n        </ee:message>\n      </ee:transform>\n    </when>\n    <otherwise>\n      <set-variable variableName=\"httpStatus\" value=\"#[400]\"/>\n      <ee:transform>\n        <ee:message>\n          <ee:set-payload><![CDATA[%dw 2.0\n      output application/json\n      ---\n      {error: \"INVALID_ORDER\"}\n      ]]></ee:set-payload>\n        </ee:message>\n      </ee:transform>\n    </otherwise>\n  </choice>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 16,
+    "chapter": 7,
+    "sha256": "3f4145c14f26d8e7ff1ad4bb79ea076420536850c7bfb02944a6381883fd39a3",
+    "prerequisites": [
+      "chapter-06"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 7",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Valid command returns 200; missing/empty items and invalid quantities return 400"
+  },
+  {
+    "slug": "validate-order",
+    "title": "Raise an invalid-order error",
+    "checkpoint": 8,
+    "source": "checkpoints/08-error-boundaries/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<sub-flow name=\"validate-order\">\n  <choice>\n    <when expression=\"#[not (payload.orderId is String and\n    payload.items is Array and\n    (not isEmpty(payload.items)) and\n    isEmpty(payload.items filter (item) -&gt; not (item.qty is Number and item.qty &gt; 0 and floor(item.qty) == item.qty)))]\"><raise-error type=\"APP:INVALID_ORDER\" description=\"Order must contain positive integer quantities\"/></when>\n    <otherwise><logger level=\"DEBUG\" message=\"Order structure accepted by the local rule\"/></otherwise>\n  </choice>\n</sub-flow>",
+    "status": "local-runtime-verified",
+    "number": 17,
+    "chapter": 8,
+    "sha256": "e88ccbd983630b995d65de831593270dbac1b6d6b5c0f94c565336ef7492dde8",
+    "prerequisites": [
+      "chapter-07"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 8",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Invalid quantity raises APP:INVALID_ORDER"
+  },
+  {
+    "slug": "typed-validation",
+    "title": "Handle validation at the request boundary",
+    "checkpoint": 8,
+    "source": "checkpoints/08-error-boundaries/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"typed-validation\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/validate\" allowedMethods=\"POST\">\n    <http:response statusCode=\"#[vars.httpStatus default 200]\"/>\n    <http:error-response statusCode=\"#[vars.httpStatus default 500]\">\n      <http:body>#[payload]</http:body>\n    </http:error-response>\n  </http:listener>\n  <flow-ref name=\"validate-order\"/>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  {orderId: payload.orderId, valid: true}\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n  <error-handler ref=\"Public_Errors\"/>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 18,
+    "chapter": 8,
+    "sha256": "e88ccbd983630b995d65de831593270dbac1b6d6b5c0f94c565336ef7492dde8",
+    "prerequisites": [
+      "chapter-07"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 8",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Typed validation maps invalid input to 400"
+  },
+  {
+    "slug": "public-errors",
+    "title": "Share the public error handler",
+    "checkpoint": 8,
+    "source": "checkpoints/08-error-boundaries/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<error-handler name=\"Public_Errors\">\n  <on-error-propagate type=\"APP:INVALID_ORDER\">\n    <set-variable variableName=\"httpStatus\" value=\"#[400]\"/>\n    <ee:transform>\n      <ee:message>\n        <ee:set-payload><![CDATA[%dw 2.0\n    output application/json\n    ---\n    {error: \"INVALID_ORDER\"}\n    ]]></ee:set-payload>\n      </ee:message>\n    </ee:transform>\n  </on-error-propagate>\n  <on-error-propagate type=\"ANY\">\n    <set-variable variableName=\"httpStatus\" value=\"#[500]\"/>\n    <ee:transform>\n      <ee:message>\n        <ee:set-payload><![CDATA[%dw 2.0\n    output application/json\n    ---\n    {error: \"INTERNAL_ERROR\"}\n    ]]></ee:set-payload>\n      </ee:message>\n    </ee:transform>\n  </on-error-propagate>\n</error-handler>",
+    "status": "local-runtime-verified",
+    "number": 19,
+    "chapter": 8,
+    "sha256": "e88ccbd983630b995d65de831593270dbac1b6d6b5c0f94c565336ef7492dde8",
+    "prerequisites": [
+      "chapter-07"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 8",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Named/default handler returns stable public error shape"
+  },
+  {
+    "slug": "recover-optional",
+    "title": "Recover inside a Try",
+    "checkpoint": 8,
+    "source": "checkpoints/08-error-boundaries/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"recover-optional\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/optional\" allowedMethods=\"GET\"/>\n  <try>\n    <raise-error type=\"APP:OPTIONAL\" description=\"Controlled optional failure\"/>\n    <set-payload value=\"unreachable\"/>\n    <error-handler><on-error-continue type=\"APP:OPTIONAL\"><set-payload value=\"fallback\"/></on-error-continue></error-handler>\n  </try>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  {result: payload, reachedAfterTry: true}\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 20,
+    "chapter": 8,
+    "sha256": "e88ccbd983630b995d65de831593270dbac1b6d6b5c0f94c565336ef7492dde8",
+    "prerequisites": [
+      "chapter-07"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 8",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Continue returns fallback and executes work after the Try"
+  },
+  {
+    "slug": "local-http-properties",
+    "title": "Load local HTTP properties",
+    "checkpoint": 9,
+    "source": "checkpoints/09-http-dependency/src/main/resources/config-local.yaml",
+    "language": "yaml",
+    "code": "http:\n  host: \"127.0.0.1\"\n  port: \"18881\"\ndependency:\n  host: \"127.0.0.1\"\n  port: \"18882\"",
+    "status": "local-runtime-verified",
+    "number": 21,
+    "chapter": 9,
+    "sha256": "a9ad5bfecb8348f2d96aa241e0cdc8ddb59ef868051adec2a6e1692812cead0b",
+    "prerequisites": [
+      "chapter-08"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 9",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Listener binds 18881; dependency requester uses 18882 with a 2000 ms response timeout"
+  },
+  {
+    "slug": "dependency-http-config",
+    "title": "Configure the customer connection",
+    "checkpoint": 9,
+    "source": "checkpoints/09-http-dependency/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<http:request-config name=\"Dependency_HTTP\" responseTimeout=\"2000\">\n  <http:request-connection host=\"${dependency.host}\" port=\"${dependency.port}\"/>\n</http:request-config>",
+    "status": "local-runtime-verified",
+    "number": 22,
+    "chapter": 9,
+    "sha256": "79c7ad8df740d6bc01c0284481eb4dc81535c637841ff609a310edc806252dff",
+    "prerequisites": [
+      "chapter-08"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 9",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "GET request uses the named dependency configuration"
+  },
+  {
+    "slug": "lookup-customer",
+    "title": "Look up the customer",
+    "checkpoint": 9,
+    "source": "checkpoints/09-http-dependency/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"lookup-customer\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/customer\" allowedMethods=\"GET\"/>\n  <http:request config-ref=\"Dependency_HTTP\" method=\"GET\" path=\"/customers/C-42\"/>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 23,
+    "chapter": 9,
+    "sha256": "79c7ad8df740d6bc01c0284481eb4dc81535c637841ff609a310edc806252dff",
+    "prerequisites": [
+      "chapter-08"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 9",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Customer lookup returns C-42, Dana, ACTIVE"
+  },
+  {
+    "slug": "enrich-order",
+    "title": "Keep the order during enrichment",
+    "checkpoint": 10,
+    "source": "checkpoints/10-enrichment-tests/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"enrich-order\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/enriched\" allowedMethods=\"POST\"/>\n  <http:request config-ref=\"Dependency_HTTP\" method=\"GET\" path=\"/customers/C-42\" target=\"customer\"/>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  {orderId: payload.orderId, customer: vars.customer.name, status: vars.customer.status}\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 24,
+    "chapter": 10,
+    "sha256": "27bc38339c5c53e52cabc09964c639f63dd849817692f8d195da09896dca2024",
+    "prerequisites": [
+      "chapter-09"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 10",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Enriched order retains A-1001 with Dana and ACTIVE"
+  },
+  {
+    "slug": "optional-shipping",
+    "title": "Keep an unavailable estimate explicit",
+    "checkpoint": 10,
+    "source": "checkpoints/10-enrichment-tests/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"optional-shipping\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/shipping\" allowedMethods=\"POST\"/>\n  <try>\n    <http:request config-ref=\"Dependency_HTTP\" method=\"GET\" path=\"/shipping/unavailable\" target=\"shipping\"/>\n    <error-handler><on-error-continue type=\"HTTP:SERVICE_UNAVAILABLE\">\n      <set-variable variableName=\"shipping\" value=\"#[{available: false}]\"/>\n    </on-error-continue></error-handler>\n  </try>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  {orderId: payload.orderId, shipping: vars.shipping}\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 25,
+    "chapter": 10,
+    "sha256": "27bc38339c5c53e52cabc09964c639f63dd849817692f8d195da09896dca2024",
+    "prerequisites": [
+      "chapter-09"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 10",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Unavailable shipping produces explicit available false with retained order identity"
+  },
+  {
+    "slug": "target-aware-munit",
+    "title": "Mock the result the flow reads",
+    "checkpoint": 10,
+    "source": "checkpoints/10-enrichment-tests/src/test/munit/app-test.xml",
+    "language": "xml",
+    "code": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<mule xmlns=\"http://www.mulesoft.org/schema/mule/core\"\n    xmlns:munit=\"http://www.mulesoft.org/schema/mule/munit\"\n    xmlns:munit-tools=\"http://www.mulesoft.org/schema/mule/munit-tools\"\n    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n    xsi:schemaLocation=\"\n      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd\n      http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd\n      http://www.mulesoft.org/schema/mule/munit-tools http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd\">\n  <munit:config name=\"MUnit\"/>\n  <munit:dynamic-port propertyName=\"http.port\"/>\n  <munit:test name=\"retains-order-and-customer\">\n    <munit:behavior>\n      <munit:set-event><munit:payload mediaType=\"application/json\" value=\"#[output application/json --- {&quot;orderId&quot;: &quot;A-1001&quot;, &quot;customer&quot;: {&quot;id&quot;: &quot;C-42&quot;, &quot;name&quot;: &quot;Dana&quot;}, &quot;items&quot;: [{&quot;sku&quot;: &quot;PEN-01&quot;, &quot;price&quot;: 2.5, &quot;qty&quot;: 4}, {&quot;sku&quot;: &quot;PAD-22&quot;, &quot;price&quot;: 6, &quot;qty&quot;: 2}, {&quot;sku&quot;: &quot;CLP-08&quot;, &quot;price&quot;: 1, &quot;qty&quot;: 10}]}]\"/></munit:set-event>\n      <munit-tools:mock-when processor=\"http:request\">\n        <munit-tools:with-attributes><munit-tools:with-attribute attributeName=\"target\" whereValue=\"#['customer']\"/></munit-tools:with-attributes>\n        <munit-tools:then-return><munit-tools:variables><munit-tools:variable key=\"customer\" value=\"#[{name: 'Dana', status: 'ACTIVE'}]\"/></munit-tools:variables></munit-tools:then-return>\n      </munit-tools:mock-when>\n    </munit:behavior>\n    <munit:execution><flow-ref name=\"enrich-order\"/></munit:execution>\n    <munit:validation>\n      <munit-tools:assert-that expression=\"#[payload.orderId]\" is=\"#[MunitTools::equalTo(&#x27;A-1001&#x27;)]\"/>\n      <munit-tools:assert-that expression=\"#[payload.customer]\" is=\"#[MunitTools::equalTo('Dana')]\"/>\n      <munit-tools:verify-call processor=\"http:request\" times=\"1\"/>\n    </munit:validation>\n  </munit:test>\n</mule>",
+    "status": "local-runtime-verified",
+    "number": 26,
+    "chapter": 10,
+    "sha256": "72e343de3a732cfa4a0801e518c0f8a7ab1ad6bb80cbcf3498be412697f7381e",
+    "prerequisites": [
+      "chapter-09"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 10",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "One target-aware MUnit test asserts orderId/customer and one request invocation"
+  },
+  {
+    "slug": "orders-database-config",
+    "title": "Configure the local database",
+    "checkpoint": 11,
+    "source": "checkpoints/11-database/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<db:config name=\"Orders_DB\">\n  <db:generic-connection url=\"jdbc:h2:mem:orders_learning;DB_CLOSE_DELAY=-1\"\n      driverClassName=\"org.h2.Driver\" user=\"sa\" password=\"#['']\"/>\n</db:config>",
+    "status": "local-runtime-verified",
+    "number": 27,
+    "chapter": 11,
+    "sha256": "36ffe0c1e26671c37de256bc1f1f486ed73c97bb0663eee4ba24635b172d6e09",
+    "prerequisites": [
+      "chapter-10"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 11",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Configured H2 JDBC connection supports the isolated table"
+  },
+  {
+    "slug": "prepare-orders",
+    "title": "Prepare the isolated orders table",
+    "checkpoint": 11,
+    "source": "checkpoints/11-database/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"prepare-orders\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/lab/setup\" allowedMethods=\"POST\"/>\n  <db:execute-ddl config-ref=\"Orders_DB\">\n    <db:sql><![CDATA[CREATE TABLE IF NOT EXISTS orders (order_id VARCHAR(40) PRIMARY KEY, customer VARCHAR(80), total DECIMAL(12,2))]]></db:sql>\n  </db:execute-ddl>\n  <db:delete config-ref=\"Orders_DB\">\n    <db:sql><![CDATA[DELETE FROM orders]]></db:sql>\n  </db:delete>\n  <set-payload value=\"ready\"/>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 28,
+    "chapter": 11,
+    "sha256": "36ffe0c1e26671c37de256bc1f1f486ed73c97bb0663eee4ba24635b172d6e09",
+    "prerequisites": [
+      "chapter-10"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 11",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Setup creates/reset synthetic orders and returns ready"
+  },
+  {
+    "slug": "insert-order",
+    "title": "Insert a calculated order",
+    "checkpoint": 11,
+    "source": "checkpoints/11-database/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"insert-order\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/lab/orders\" allowedMethods=\"POST\"/>\n  <db:insert config-ref=\"Orders_DB\" target=\"insertResult\">\n    <db:sql><![CDATA[INSERT INTO orders(order_id,customer,total) VALUES (:id,:customer,:total)]]></db:sql>\n    <db:input-parameters><![CDATA[#[{id: payload.orderId, customer: payload.customer, total: payload.total}]]]></db:input-parameters>\n  </db:insert>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  {orderId: payload.orderId, affectedRows: vars.insertResult.affectedRows}\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 29,
+    "chapter": 11,
+    "sha256": "36ffe0c1e26671c37de256bc1f1f486ed73c97bb0663eee4ba24635b172d6e09",
+    "prerequisites": [
+      "chapter-10"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 11",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Parameterized insert returns A-1001 and affectedRows 1"
+  },
+  {
+    "slug": "read-order",
+    "title": "Read a stored order",
+    "checkpoint": 11,
+    "source": "checkpoints/11-database/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"read-order\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/lab/orders/{id}\" allowedMethods=\"GET\"/>\n  <db:select config-ref=\"Orders_DB\">\n    <db:sql><![CDATA[SELECT order_id AS \"orderId\", customer AS \"customer\", total AS \"total\" FROM orders WHERE order_id = :id]]></db:sql>\n    <db:input-parameters><![CDATA[#[{id: attributes.uriParams.id}]]]></db:input-parameters>\n  </db:select>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  payload\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 30,
+    "chapter": 11,
+    "sha256": "36ffe0c1e26671c37de256bc1f1f486ed73c97bb0663eee4ba24635b172d6e09",
+    "prerequisites": [
+      "chapter-10"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 11",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Read-back returns the inserted row; absent identity returns empty array"
+  },
+  {
+    "slug": "rollback-order",
+    "title": "Roll back an inserted order",
+    "checkpoint": 12,
+    "source": "checkpoints/12-transactions/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"rollback-order\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/lab/rollback\" allowedMethods=\"POST\"/>\n  <try transactionalAction=\"ALWAYS_BEGIN\" transactionType=\"LOCAL\">\n    <db:insert config-ref=\"Orders_DB\" transactionalAction=\"ALWAYS_JOIN\">\n      <db:sql><![CDATA[INSERT INTO orders(order_id,customer,total) VALUES ('ROLLBACK','Dana',32)]]></db:sql>\n    </db:insert>\n    <raise-error type=\"APP:REJECTED\" description=\"Injected failure\"/>\n    <error-handler><on-error-propagate type=\"APP:REJECTED\"/></error-handler>\n  </try>\n  <error-handler><on-error-continue type=\"APP:REJECTED\"><set-payload value=\"rolled back\"/></on-error-continue></error-handler>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 31,
+    "chapter": 12,
+    "sha256": "1a69c838ce0e18b84276c87d798a7a94c1c9b04d8a37e9faf5e291a6d7f6ccbc",
+    "prerequisites": [
+      "chapter-11"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 12",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Outer success response follows rollback; independent ROLLBACK query is empty"
+  },
+  {
+    "slug": "continue-in-owner",
+    "title": "Complete the owning Try",
+    "checkpoint": 12,
+    "source": "checkpoints/12-transactions/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"continue-in-owner\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/lab/continue\" allowedMethods=\"POST\"/>\n  <try transactionalAction=\"ALWAYS_BEGIN\" transactionType=\"LOCAL\">\n    <db:insert config-ref=\"Orders_DB\" transactionalAction=\"ALWAYS_JOIN\">\n      <db:sql><![CDATA[INSERT INTO orders(order_id,customer,total) VALUES ('CONTINUE-INNER','Dana',32)]]></db:sql>\n    </db:insert>\n    <raise-error type=\"APP:REJECTED\" description=\"Injected failure\"/>\n    <error-handler><on-error-continue type=\"APP:REJECTED\"><set-payload value=\"handled inside\"/></on-error-continue></error-handler>\n  </try>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 32,
+    "chapter": 12,
+    "sha256": "1a69c838ce0e18b84276c87d798a7a94c1c9b04d8a37e9faf5e291a6d7f6ccbc",
+    "prerequisites": [
+      "chapter-11"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 12",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Inner Continue permits commit; CONTINUE-INNER row is present"
+  },
+  {
+    "slug": "orders-raml",
+    "title": "Describe the local order API",
+    "checkpoint": 13,
+    "source": "checkpoints/13-apikit-contract/src/main/resources/api/orders.raml",
+    "language": "yaml",
+    "code": "#%RAML 1.0\ntitle: Local Orders API\nversion: v1\nmediaType: application/json\ntypes:\n  OrderCommand:\n    type: object\n    additionalProperties: false\n    properties:\n      orderId:\n        type: string\n        pattern: ^[A-Za-z0-9-]{1,40}$\n      items:\n        type: array\n        minItems: 1\n        maxItems: 20\n        items:\n          type: object\n          additionalProperties: false\n          properties:\n            sku:\n              type: string\n              enum: [PEN-01, PAD-22, CLP-08]\n            qty:\n              type: integer\n              minimum: 1\n              maximum: 1000\n/orders:\n  post:\n    body:\n      application/json:\n        type: OrderCommand\n    responses:\n      201:\n        body:\n          application/json:\n            type: object\n      400:\n      409:\n      503:\n  /{orderId}:\n    uriParameters:\n      orderId:\n        type: string\n        pattern: ^[A-Za-z0-9-]{1,40}$\n    get:\n      responses:\n        200:\n          body:\n            application/json:\n              type: object\n        404:",
+    "status": "local-runtime-verified",
+    "number": 33,
+    "chapter": 13,
+    "sha256": "76d08c80db86e90228463201ff17f1d38daf6d4a06792ae67f475e44c239dbca",
+    "prerequisites": [
+      "chapter-12"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 13",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "APIkit accepts the command preview and rejects forbidden shapes with 400"
+  },
+  {
+    "slug": "orders-apikit-config",
+    "title": "Map the contract to implementation flows",
+    "checkpoint": 13,
+    "source": "checkpoints/13-apikit-contract/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<apikit:config name=\"Orders_API\" api=\"api/orders.raml\" httpStatusVarName=\"httpStatus\" outboundHeadersMapName=\"outboundHeaders\">\n  <apikit:flow-mappings>\n    <apikit:flow-mapping resource=\"/orders\" action=\"post\" content-type=\"application/json\" flow-ref=\"create-order\"/>\n    <apikit:flow-mapping resource=\"/orders/{orderId}\" action=\"get\" flow-ref=\"get-order\"/>\n  </apikit:flow-mappings>\n</apikit:config>",
+    "status": "local-runtime-verified",
+    "number": 34,
+    "chapter": 13,
+    "sha256": "86c728f3ee17e368e5eac9ef890dc567505c2be5ca43aef807155767b842e01a",
+    "prerequisites": [
+      "chapter-12"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 13",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Mappings choose create-order and get-order flows"
+  },
+  {
+    "slug": "orders-api",
+    "title": "Route a request through APIkit",
+    "checkpoint": 13,
+    "source": "checkpoints/13-apikit-contract/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"orders-api\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/api/*\" allowedMethods=\"GET,POST\">\n    <http:response statusCode=\"#[vars.httpStatus default 200]\"/>\n    <http:error-response statusCode=\"#[vars.httpStatus default 500]\">\n      <http:body>#[payload]</http:body>\n    </http:error-response>\n  </http:listener>\n  <apikit:router config-ref=\"Orders_API\"/>\n  <error-handler ref=\"API_Errors\"/>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 35,
+    "chapter": 13,
+    "sha256": "86c728f3ee17e368e5eac9ef890dc567505c2be5ca43aef807155767b842e01a",
+    "prerequisites": [
+      "chapter-12"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 13",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Preview POST returns 201/PREVIEW; lookup remains 404"
+  },
+  {
+    "slug": "price-order",
+    "title": "Price the accepted command",
+    "checkpoint": 14,
+    "source": "checkpoints/14-local-order-api/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<sub-flow name=\"price-order\">\n  <set-variable variableName=\"command\" value=\"#[payload]\"/>\n  <http:request config-ref=\"Dependency_HTTP\" method=\"GET\" path=\"/catalogue\" target=\"catalogue\"/>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/java\n  var pricedLines = vars.command.items map (item) -> {\n    sku: item.sku,\n    qty: item.qty,\n    unitPrice: vars.catalogue[item.sku],\n    lineTotal: vars.catalogue[item.sku] * item.qty\n  }\n  ---\n  {\n    orderId: vars.command.orderId,\n    tenantId: vars.tenant,\n    currency: \"USD\",\n    items: pricedLines,\n    total: sum(pricedLines map (item) -> item.lineTotal),\n    state: \"ACCEPTED\"\n  }\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</sub-flow>",
+    "status": "local-runtime-verified",
+    "number": 36,
+    "chapter": 14,
+    "sha256": "b6cf794ee8f44afb85215c73a7272e181a558164131dad042d089934c9b249b0",
+    "prerequisites": [
+      "chapter-13"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 14",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Catalogue prices produce 10+12+10=32 USD"
+  },
+  {
+    "slug": "create-order",
+    "title": "Create and save the local order",
+    "checkpoint": 14,
+    "source": "checkpoints/14-local-order-api/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"create-order\">\n  <set-variable variableName=\"tenant\" value=\"#[&#x27;retailer-a&#x27;]\"/>\n  <flow-ref name=\"price-order\"/>\n  <set-variable variableName=\"order\" value=\"#[payload]\"/>\n  <db:select config-ref=\"Orders_DB\" target=\"existing\">\n    <db:sql><![CDATA[SELECT order_id FROM accepted_orders WHERE tenant_id = :tenant AND order_id = :id]]></db:sql>\n    <db:input-parameters><![CDATA[#[{tenant: vars.tenant, id: vars.order.orderId}]]]></db:input-parameters>\n  </db:select>\n  <choice><when expression=\"#[not isEmpty(vars.existing)]\"><raise-error type=\"APP:CONFLICT\" description=\"Order identity already exists\"/></when></choice>\n  <db:insert config-ref=\"Orders_DB\" target=\"insertResult\">\n    <db:sql><![CDATA[INSERT INTO accepted_orders(tenant_id,order_id,response) VALUES (:tenant,:id,:response)]]></db:sql>\n    <db:input-parameters><![CDATA[#[{tenant: vars.tenant, id: vars.order.orderId, response: write(vars.order,\"application/json\")}]]]></db:input-parameters>\n  </db:insert>\n  <set-variable variableName=\"httpStatus\" value=\"#[201]\"/>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  vars.order\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 37,
+    "chapter": 14,
+    "sha256": "b6cf794ee8f44afb85215c73a7272e181a558164131dad042d089934c9b249b0",
+    "prerequisites": [
+      "chapter-13"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 14",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "New order persists and returns 201; duplicate is 409 at checkpoint 14"
+  },
+  {
+    "slug": "get-order",
+    "title": "Retrieve the saved order",
+    "checkpoint": 14,
+    "source": "checkpoints/14-local-order-api/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"get-order\">\n  <set-variable variableName=\"tenant\" value=\"#[&#x27;retailer-a&#x27;]\"/>\n  <db:select config-ref=\"Orders_DB\">\n    <db:sql><![CDATA[SELECT response AS \"response\" FROM accepted_orders WHERE tenant_id = :tenant AND order_id = :id]]></db:sql>\n    <db:input-parameters><![CDATA[#[{tenant: vars.tenant, id: attributes.uriParams.orderId}]]]></db:input-parameters>\n  </db:select>\n  <choice><when expression=\"#[isEmpty(payload)]\"><raise-error type=\"APP:NOT_FOUND\" description=\"No visible order\"/></when></choice>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  read(payload[0].response as String, \"application/json\")\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 38,
+    "chapter": 14,
+    "sha256": "b6cf794ee8f44afb85215c73a7272e181a558164131dad042d089934c9b249b0",
+    "prerequisites": [
+      "chapter-13"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 14",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "GET returns the recorded accepted-order response"
+  },
+  {
+    "slug": "file-roundtrip",
+    "title": "Write and read an order file",
+    "checkpoint": 15,
+    "source": "checkpoints/15-order-files/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"file-roundtrip\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/lab/file\" allowedMethods=\"POST\"/>\n  <file:write config-ref=\"Order_Files\" path=\"order.json\">\n    <file:content>#[output application/json --- payload]</file:content>\n  </file:write>\n  <file:read config-ref=\"Order_Files\" path=\"order.json\" outputMimeType=\"application/json\"/>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  {orderId: payload.orderId, file: attributes.fileName}\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 39,
+    "chapter": 15,
+    "sha256": "937c31010d110399ea524281ccc773ffa6fc9a7e395dae59f51c20e3d74b58bb",
+    "prerequisites": [
+      "chapter-14"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json",
+      "checkpoints/15-order-files/src/main/resources/items.csv"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 15",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "JSON file round trip returns A-1001 and order.json"
+  },
+  {
+    "slug": "normalize-csv",
+    "title": "Normalize CSV item rows",
+    "checkpoint": 15,
+    "source": "checkpoints/15-order-files/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"normalize-csv\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/lab/csv\" allowedMethods=\"GET\"/>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  readUrl(\"classpath://items.csv\", \"application/csv\") map (row) -> {sku: row.sku, price: row.price as Number, qty: row.qty as Number}\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 40,
+    "chapter": 15,
+    "sha256": "937c31010d110399ea524281ccc773ffa6fc9a7e395dae59f51c20e3d74b58bb",
+    "prerequisites": [
+      "chapter-14"
+    ],
+    "fixtures": [
+      "fixtures/order-calculation.json",
+      "checkpoints/15-order-files/src/main/resources/items.csv"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 15",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "CSV fields normalize to numeric prices and quantities"
+  },
+  {
+    "slug": "process-records",
+    "title": "Process three records sequentially",
+    "checkpoint": 16,
+    "source": "checkpoints/16-sequential-and-scheduled/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<sub-flow name=\"process-records\">\n  <set-variable variableName=\"outcomes\" value=\"#[[]]\"/>\n  <foreach>\n    <try>\n      <choice>\n        <when expression=\"#[payload.qty &lt;= 0]\"><raise-error type=\"APP:BAD_QUANTITY\" description=\"Quantity must be positive\"/></when>\n      </choice>\n      <set-variable variableName=\"outcomes\" value=\"#[output application/java --- vars.outcomes ++ [{orderId: payload.orderId, status: 'processed'}]]\"/>\n      <error-handler><on-error-continue type=\"APP:BAD_QUANTITY\">\n        <set-variable variableName=\"outcomes\" value=\"#[output application/java --- vars.outcomes ++ [{orderId: payload.orderId, status: 'rejected'}]]\"/>\n      </on-error-continue></error-handler>\n    </try>\n  </foreach>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  vars.outcomes\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</sub-flow>",
+    "status": "local-runtime-verified",
+    "number": 41,
+    "chapter": 16,
+    "sha256": "5423f5960d9a4f83fd512426c02309f4be94c754ec148b22716a207aaeeb9a30",
+    "prerequisites": [
+      "chapter-15"
+    ],
+    "fixtures": [
+      "fixtures/import-records.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 16",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Outcomes are processed, rejected, processed"
+  },
+  {
+    "slug": "scheduled-import",
+    "title": "Run the small import on a schedule",
+    "checkpoint": 16,
+    "source": "checkpoints/16-sequential-and-scheduled/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"scheduled-import\">\n  <scheduler disallowConcurrentExecution=\"true\">\n    <scheduling-strategy><fixed-frequency frequency=\"5\" startDelay=\"5\" timeUnit=\"SECONDS\"/></scheduling-strategy>\n  </scheduler>\n  <set-payload value=\"#[readUrl(&quot;classpath://records.json&quot;, &quot;application/json&quot;)]\"/>\n  <flow-ref name=\"process-records\"/>\n  <file:write config-ref=\"Order_Files\" path=\"scheduled-results.json\">\n    <file:content>#[output application/json --- payload]</file:content>\n  </file:write>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 42,
+    "chapter": 16,
+    "sha256": "5423f5960d9a4f83fd512426c02309f4be94c754ec148b22716a207aaeeb9a30",
+    "prerequisites": [
+      "chapter-15"
+    ],
+    "fixtures": [
+      "fixtures/import-records.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 16",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "After scheduler execution, the result file contains the same three outcomes"
+  },
+  {
+    "slug": "parallel-lookups",
+    "title": "Join customer and catalogue lookups",
+    "checkpoint": 17,
+    "source": "checkpoints/17-parallel-work/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"parallel-lookups\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/lab/parallel-lookups\" allowedMethods=\"GET\"/>\n  <scatter-gather>\n    <route><http:request config-ref=\"Dependency_HTTP\" method=\"GET\" path=\"/customers/C-42\"/></route>\n    <route><http:request config-ref=\"Dependency_HTTP\" method=\"GET\" path=\"/catalogue\"/></route>\n  </scatter-gather>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  {customer: payload[0].payload.name, prices: payload[1].payload}\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 43,
+    "chapter": 17,
+    "sha256": "a90412cb96f59ebbc693ca11fef31db8f5bb4b47cd2d46374ae9faab27ca4457",
+    "prerequisites": [
+      "chapter-16"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 17",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Joined routes return customer Dana and the catalogue object"
+  },
+  {
+    "slug": "parallel-items",
+    "title": "Double independent items in parallel",
+    "checkpoint": 17,
+    "source": "checkpoints/17-parallel-work/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"parallel-items\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/lab/parallel-items\" allowedMethods=\"GET\"/>\n  <set-payload value=\"#[[1,2,3]]\"/>\n  <parallel-foreach maxConcurrency=\"2\">\n    <set-payload value=\"#[payload * 2]\"/>\n  </parallel-foreach>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  payload map (result) -> result.payload\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 44,
+    "chapter": 17,
+    "sha256": "a90412cb96f59ebbc693ca11fef31db8f5bb4b47cd2d46374ae9faab27ca4457",
+    "prerequisites": [
+      "chapter-16"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 17",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Parallel item payloads become [2,4,6]"
+  },
+  {
+    "slug": "failed-parallel-route",
+    "title": "Handle a failed parallel lookup",
+    "checkpoint": 17,
+    "source": "checkpoints/17-parallel-work/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"failed-parallel-route\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/lab/parallel-failure\" allowedMethods=\"GET\">\n    <http:response statusCode=\"#[vars.httpStatus default 200]\"/>\n    <http:error-response statusCode=\"#[vars.httpStatus default 500]\">\n      <http:body>#[payload]</http:body>\n    </http:error-response>\n  </http:listener>\n  <scatter-gather><route><http:request config-ref=\"Dependency_HTTP\" method=\"GET\" path=\"/customers/C-42\"/></route><route><http:request config-ref=\"Dependency_HTTP\" method=\"GET\" path=\"/shipping/unavailable\"/></route></scatter-gather>\n  <error-handler><on-error-continue type=\"MULE:COMPOSITE_ROUTING\"><set-variable variableName=\"httpStatus\" value=\"#[502]\"/><ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  {error: \"DEPENDENCY_ROUTE_FAILED\"}\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform></on-error-continue></error-handler>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 45,
+    "chapter": 17,
+    "sha256": "a90412cb96f59ebbc693ca11fef31db8f5bb4b47cd2d46374ae9faab27ca4457",
+    "prerequisites": [
+      "chapter-16"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 17",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Failed route maps MULE:COMPOSITE_ROUTING to 502/DEPENDENCY_ROUTE_FAILED"
+  },
+  {
+    "slug": "retry-read",
+    "title": "Retry a temporarily unavailable read",
+    "checkpoint": 18,
+    "source": "checkpoints/18-retry-and-idempotency/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"retry-read\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/lab/retry\" allowedMethods=\"GET\"/>\n  <until-successful maxRetries=\"2\" millisBetweenRetries=\"25\">\n    <http:request config-ref=\"Dependency_HTTP\" method=\"GET\" path=\"/flaky\"/>\n  </until-successful>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 46,
+    "chapter": 18,
+    "sha256": "7f74bc0b3a9265bd76b49f3cd4351eea2c85b2137aa9080dfedfe26bdb1cf4ab",
+    "prerequisites": [
+      "chapter-17"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 18",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Two failed controlled calls followed by success make three total attempts"
+  },
+  {
+    "slug": "accept-once",
+    "title": "Accept or replay a command",
+    "checkpoint": 18,
+    "source": "checkpoints/18-retry-and-idempotency/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<sub-flow name=\"accept-once\">\n  <set-variable variableName=\"command\" value=\"#[payload]\"/>\n  <set-variable variableName=\"fingerprint\" value=\"#[write({orderId: payload.orderId, items: payload.items map (item) -> {sku: item.sku, qty: item.qty}}, 'application/json', {indent: false})]\"/>\n  <db:select config-ref=\"Orders_DB\" target=\"previous\">\n    <db:sql><![CDATA[SELECT fingerprint AS \"fingerprint\", response AS \"response\" FROM request_results WHERE tenant_id = :tenant AND request_key = :key]]></db:sql>\n    <db:input-parameters><![CDATA[#[{tenant: vars.tenant, key: vars.command.orderId}]]]></db:input-parameters>\n  </db:select>\n  <choice>\n    <when expression=\"#[not isEmpty(vars.previous)]\">\n      <choice>\n        <when expression=\"#[isEmpty(vars.previous)]\"><raise-error type=\"APP:PERSISTENCE\" description=\"No committed result was recovered\"/></when>\n        <when expression=\"#[(vars.previous[0].fingerprint as String) != vars.fingerprint]\"><raise-error type=\"APP:CONFLICT\" description=\"This order key was used with different content\"/></when>\n      </choice>\n      <set-variable variableName=\"result\" value=\"#[read(vars.previous[0].response as String, &quot;application/json&quot;)]\"/>\n      <set-variable variableName=\"httpStatus\" value=\"#[200]\"/>\n    </when>\n    <otherwise>\n      <flow-ref name=\"price-order\"/>\n      <set-variable variableName=\"order\" value=\"#[payload]\"/>\n      <try>\n        <flow-ref name=\"commit-order\"/>\n        <set-variable variableName=\"result\" value=\"#[vars.order]\"/>\n        <set-variable variableName=\"httpStatus\" value=\"#[201]\"/>\n        <error-handler>\n          <on-error-continue type=\"DB:QUERY_EXECUTION\">\n            <flow-ref name=\"recover-recorded-result\"/>\n          </on-error-continue>\n        </error-handler>\n      </try>\n    </otherwise>\n  </choice>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  vars.result\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</sub-flow>",
+    "status": "local-runtime-verified",
+    "number": 47,
+    "chapter": 18,
+    "sha256": "7f74bc0b3a9265bd76b49f3cd4351eea2c85b2137aa9080dfedfe26bdb1cf4ab",
+    "prerequisites": [
+      "chapter-17"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 18",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "New 201, identical replay 200, changed command 409"
+  },
+  {
+    "slug": "commit-order",
+    "title": "Commit the order and request result",
+    "checkpoint": 18,
+    "source": "checkpoints/18-retry-and-idempotency/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<sub-flow name=\"commit-order\">\n  <try transactionalAction=\"ALWAYS_BEGIN\" transactionType=\"LOCAL\">\n    <db:insert config-ref=\"Orders_DB\" target=\"claimResult\" transactionalAction=\"ALWAYS_JOIN\">\n      <db:sql><![CDATA[INSERT INTO request_results(tenant_id,request_key,fingerprint,response) VALUES (:tenant,:key,:fingerprint,:response)]]></db:sql>\n      <db:input-parameters><![CDATA[#[{tenant: vars.tenant, key: vars.command.orderId, fingerprint: vars.fingerprint, response: write(vars.order,\"application/json\")}]]]></db:input-parameters>\n    </db:insert>\n    <db:insert config-ref=\"Orders_DB\" target=\"insertResult\" transactionalAction=\"ALWAYS_JOIN\">\n      <db:sql><![CDATA[INSERT INTO accepted_orders(tenant_id,order_id,response) VALUES (:tenant,:id,:response)]]></db:sql>\n      <db:input-parameters><![CDATA[#[{tenant: vars.tenant, id: vars.order.orderId, response: write(vars.order,\"application/json\")}]]]></db:input-parameters>\n    </db:insert>\n    <choice><when expression=\"#[vars.failAfterOrder default false]\"><raise-error type=\"APP:INJECTED\" description=\"Stop before commit\"/></when></choice>\n    <error-handler><on-error-propagate type=\"ANY\"/></error-handler>\n  </try>\n</sub-flow>",
+    "status": "local-runtime-verified",
+    "number": 48,
+    "chapter": 18,
+    "sha256": "7f74bc0b3a9265bd76b49f3cd4351eea2c85b2137aa9080dfedfe26bdb1cf4ab",
+    "prerequisites": [
+      "chapter-17"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 18",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Request result and order commit together; injected failure leaves neither"
+  },
+  {
+    "slug": "recover-recorded-result",
+    "title": "Recover the committed winner",
+    "checkpoint": 18,
+    "source": "checkpoints/18-retry-and-idempotency/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<sub-flow name=\"recover-recorded-result\">\n  <db:select config-ref=\"Orders_DB\" target=\"previous\">\n    <db:sql><![CDATA[SELECT fingerprint AS \"fingerprint\", response AS \"response\" FROM request_results WHERE tenant_id = :tenant AND request_key = :key]]></db:sql>\n    <db:input-parameters><![CDATA[#[{tenant: vars.tenant, key: vars.command.orderId}]]]></db:input-parameters>\n  </db:select>\n  <choice>\n    <when expression=\"#[isEmpty(vars.previous)]\"><raise-error type=\"APP:PERSISTENCE\" description=\"No committed result was recovered\"/></when>\n    <when expression=\"#[(vars.previous[0].fingerprint as String) != vars.fingerprint]\"><raise-error type=\"APP:CONFLICT\" description=\"This order key was used with different content\"/></when>\n  </choice>\n  <set-variable variableName=\"result\" value=\"#[read(vars.previous[0].response as String, &quot;application/json&quot;)]\"/>\n  <set-variable variableName=\"httpStatus\" value=\"#[200]\"/>\n</sub-flow>",
+    "status": "local-runtime-verified",
+    "number": 49,
+    "chapter": 18,
+    "sha256": "7f74bc0b3a9265bd76b49f3cd4351eea2c85b2137aa9080dfedfe26bdb1cf4ab",
+    "prerequisites": [
+      "chapter-17"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 18",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "A losing identical claim recovers the committed response; no record remains a failure"
+  },
+  {
+    "slug": "commit-order-with-outbox",
+    "title": "Commit notification intent with acceptance",
+    "checkpoint": 19,
+    "source": "checkpoints/19-outbox/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<sub-flow name=\"commit-order\">\n  <try transactionalAction=\"ALWAYS_BEGIN\" transactionType=\"LOCAL\">\n    <db:insert config-ref=\"Orders_DB\" target=\"claimResult\" transactionalAction=\"ALWAYS_JOIN\">\n      <db:sql><![CDATA[INSERT INTO request_results(tenant_id,request_key,fingerprint,response) VALUES (:tenant,:key,:fingerprint,:response)]]></db:sql>\n      <db:input-parameters><![CDATA[#[{tenant: vars.tenant, key: vars.command.orderId, fingerprint: vars.fingerprint, response: write(vars.order,\"application/json\")}]]]></db:input-parameters>\n    </db:insert>\n    <db:insert config-ref=\"Orders_DB\" target=\"insertResult\" transactionalAction=\"ALWAYS_JOIN\">\n      <db:sql><![CDATA[INSERT INTO accepted_orders(tenant_id,order_id,response) VALUES (:tenant,:id,:response)]]></db:sql>\n      <db:input-parameters><![CDATA[#[{tenant: vars.tenant, id: vars.order.orderId, response: write(vars.order,\"application/json\")}]]]></db:input-parameters>\n    </db:insert>\n    <choice><when expression=\"#[vars.failAfterOrder default false]\"><raise-error type=\"APP:INJECTED\" description=\"Stop before commit\"/></when></choice>\n    <db:insert config-ref=\"Orders_DB\" target=\"outboxResult\" transactionalAction=\"ALWAYS_JOIN\">\n      <db:sql><![CDATA[INSERT INTO outbox(event_id,body,sent) VALUES (:id,:body,FALSE)]]></db:sql>\n      <db:input-parameters><![CDATA[#[{id: vars.tenant ++ \":\" ++ vars.order.orderId ++ \":accepted-v1\", body: write({eventId: vars.tenant ++ \":\" ++ vars.order.orderId ++ \":accepted-v1\", \"type\": \"order.accepted\", order: vars.order},\"application/json\")}]]]></db:input-parameters>\n    </db:insert>\n    <error-handler><on-error-propagate type=\"ANY\"/></error-handler>\n  </try>\n</sub-flow>",
+    "status": "local-runtime-verified",
+    "number": 50,
+    "chapter": 19,
+    "sha256": "74498ff3ad7f897acdbf6c8d2e4e6e60f18c47d6dabfe889f6fa65665f41a7aa",
+    "prerequisites": [
+      "chapter-18"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 19",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Order, request result and pending event commit in one local transaction"
+  },
+  {
+    "slug": "dispatch-pending",
+    "title": "Dispatch pending order events",
+    "checkpoint": 19,
+    "source": "checkpoints/19-outbox/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<sub-flow name=\"dispatch-pending\">\n  <db:select config-ref=\"Orders_DB\">\n    <db:sql><![CDATA[SELECT event_id AS \"eventId\", body AS \"body\" FROM outbox WHERE sent = FALSE ORDER BY event_id LIMIT 10]]></db:sql>\n  </db:select>\n  <foreach>\n    <set-variable variableName=\"pending\" value=\"#[payload]\"/>\n    <http:request config-ref=\"Dependency_HTTP\" method=\"POST\" path=\"/events\" target=\"receipt\">\n      <http:body>#[output application/json --- read(vars.pending.body as String, 'application/json')]</http:body>\n      <http:headers>#[{'Content-Type': 'application/json'}]</http:headers>\n    </http:request>\n    <db:update config-ref=\"Orders_DB\" target=\"marked\">\n      <db:sql><![CDATA[UPDATE outbox SET sent = TRUE WHERE event_id = :id]]></db:sql>\n      <db:input-parameters><![CDATA[#[{id: vars.pending.eventId}]]]></db:input-parameters>\n    </db:update>\n  </foreach>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  {attempted: sizeOf(payload)}\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</sub-flow>",
+    "status": "local-runtime-verified",
+    "number": 51,
+    "chapter": 19,
+    "sha256": "74498ff3ad7f897acdbf6c8d2e4e6e60f18c47d6dabfe889f6fa65665f41a7aa",
+    "prerequisites": [
+      "chapter-18"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 19",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Lost acknowledgement leaves pending; repeat completes with two deliveries and one receiver effect"
+  },
+  {
+    "slug": "async-notice",
+    "title": "Start a local asynchronous notice",
+    "checkpoint": 20,
+    "source": "checkpoints/20-async-and-queues/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"async-notice\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/lab/async\" allowedMethods=\"POST\"/>\n  <async><logger level=\"INFO\" message=\"Local asynchronous notice\"/></async>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  {startedLocally: true}\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 52,
+    "chapter": 20,
+    "sha256": "c364e4d6c693f7fcd9a13e08f4d19c13e4e507b392ef68b3a76e23ddfd3d95b5",
+    "prerequisites": [
+      "chapter-19"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 20",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Response says startedLocally without a durability claim"
+  },
+  {
+    "slug": "publish-local-notice",
+    "title": "Publish a local VM notice",
+    "checkpoint": 20,
+    "source": "checkpoints/20-async-and-queues/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"publish-local-notice\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/lab/notices\" allowedMethods=\"POST\">\n    <http:response statusCode=\"#[vars.httpStatus default 200]\"/>\n    <http:error-response statusCode=\"#[vars.httpStatus default 500]\">\n      <http:body>#[payload]</http:body>\n    </http:error-response>\n  </http:listener>\n  <vm:publish config-ref=\"Local_VM\" queueName=\"order-notices\"><vm:content>#[payload]</vm:content></vm:publish>\n  <set-variable variableName=\"httpStatus\" value=\"#[202]\"/>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  {queuedLocally: true}\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 53,
+    "chapter": 20,
+    "sha256": "c364e4d6c693f7fcd9a13e08f4d19c13e4e507b392ef68b3a76e23ddfd3d95b5",
+    "prerequisites": [
+      "chapter-19"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 20",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "202 acknowledges transient local queue publication"
+  },
+  {
+    "slug": "consume-local-notice",
+    "title": "Consume a local VM notice",
+    "checkpoint": 20,
+    "source": "checkpoints/20-async-and-queues/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"consume-local-notice\">\n  <vm:listener config-ref=\"Local_VM\" queueName=\"order-notices\"/>\n  <file:write config-ref=\"Order_Files\" path=\"notice.json\"><file:content>#[output application/json --- payload]</file:content></file:write>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 54,
+    "chapter": 20,
+    "sha256": "c364e4d6c693f7fcd9a13e08f4d19c13e4e507b392ef68b3a76e23ddfd3d95b5",
+    "prerequisites": [
+      "chapter-19"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 20",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "A fresh notice identity is subsequently read from notice.json"
+  },
+  {
+    "slug": "mq-order-delivery",
+    "title": "Publish and acknowledge an MQ order event",
+    "source": "platform/mq/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<mule xmlns=\"http://www.mulesoft.org/schema/mule/core\"\n    xmlns:http=\"http://www.mulesoft.org/schema/mule/http\"\n    xmlns:anypoint-mq=\"http://www.mulesoft.org/schema/mule/anypoint-mq\"\n    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n    xsi:schemaLocation=\"\n      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd\n      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd\n      http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd\">\n  <http:request-config name=\"Receiver_HTTP\" responseTimeout=\"2000\">\n    <http:request-connection host=\"${receiver.host}\" port=\"${receiver.port}\"/>\n  </http:request-config>\n  <anypoint-mq:config name=\"MQ_Config\">\n    <anypoint-mq:connection url=\"${mq.url}\" clientId=\"${mq.clientId}\" clientSecret=\"${mq.clientSecret}\"/>\n  </anypoint-mq:config>\n  <http:listener-config name=\"Publish_Listener\"><http:listener-connection host=\"127.0.0.1\" port=\"18886\"/></http:listener-config>\n  <flow name=\"publish-order-event\">\n    <http:listener config-ref=\"Publish_Listener\" path=\"/events\" allowedMethods=\"POST\"/>\n    <anypoint-mq:publish config-ref=\"MQ_Config\" destination=\"${mq.queue}\">\n      <anypoint-mq:body>#[write(payload, 'application/json')]</anypoint-mq:body>\n    </anypoint-mq:publish>\n  </flow>\n  <flow name=\"consume-order-event\">\n    <anypoint-mq:subscriber config-ref=\"MQ_Config\" destination=\"${mq.queue}\" acknowledgementMode=\"MANUAL\"/>\n    <set-variable variableName=\"ackToken\" value=\"#[attributes.ackToken]\"/>\n    <http:request config-ref=\"Receiver_HTTP\" method=\"POST\" path=\"/events\">\n      <http:body>#[output application/json --- read(payload, 'application/json')]</http:body>\n      <http:headers>#[{'Content-Type':'application/json'}]</http:headers>\n    </http:request>\n    <anypoint-mq:ack config-ref=\"MQ_Config\" ackToken=\"#[vars.ackToken]\"/>\n    <error-handler><on-error-propagate type=\"ANY\"><logger level=\"ERROR\" message=\"Event processing or acknowledgement failed\"/></on-error-propagate></error-handler>\n  </flow>\n</mule>",
+    "status": "not-run",
+    "number": 55,
+    "chapter": 20,
+    "sha256": "753ebb70483f56dd00ea43e00e301c9bc8b37612a6e9aea6b7053bfd0892abf2",
+    "prerequisites": [
+      "chapter-19"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Expected broker path: publish, receiver effect, then manual ACK; account-dependent and unrun"
+  },
+  {
+    "slug": "start-batch",
+    "title": "Classify a three-record Batch import",
+    "checkpoint": 21,
+    "source": "checkpoints/21-batch-import/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"start-batch\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/lab/batch\" allowedMethods=\"POST\">\n    <http:response statusCode=\"#[vars.httpStatus default 200]\"/>\n    <http:error-response statusCode=\"#[vars.httpStatus default 500]\">\n      <http:body>#[payload]</http:body>\n    </http:error-response>\n  </http:listener>\n  <batch:job jobName=\"SmallImport\" blockSize=\"2\" maxFailedRecords=\"-1\">\n    <batch:process-records>\n      <batch:step name=\"check-quantity\">\n        <choice><when expression=\"#[payload.qty &lt;= 0]\"><raise-error type=\"APP:BAD_QUANTITY\" description=\"Quantity must be positive\"/></when></choice>\n      </batch:step>\n      <batch:step name=\"save-valid-records\" acceptPolicy=\"NO_FAILURES\">\n        <flow-ref name=\"record-import-success\"/>\n      </batch:step>\n      <batch:step name=\"save-rejected-records\" acceptPolicy=\"ONLY_FAILURES\">\n        <flow-ref name=\"record-import-rejection\"/>\n      </batch:step>\n    </batch:process-records>\n    <batch:on-complete>\n      <logger level=\"INFO\" message=\"#[write({loaded: payload.loadedRecords, failed: payload.failedRecords, successful: payload.successfulRecords}, 'application/json')]\"/>\n    </batch:on-complete>\n  </batch:job>\n  <set-variable variableName=\"httpStatus\" value=\"#[202]\"/>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  {started: true}\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 56,
+    "chapter": 21,
+    "sha256": "53a4541fd11e3bce3142591732d4742249aaa439fb25ba4bed9835a5fbf4bb2e",
+    "prerequisites": [
+      "chapter-20"
+    ],
+    "fixtures": [
+      "fixtures/import-records.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 21",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "202 launches Batch; ledger eventually contains two processed and one rejected row"
+  },
+  {
+    "slug": "record-import-success",
+    "title": "Record an accepted import row",
+    "checkpoint": 21,
+    "source": "checkpoints/21-batch-import/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<sub-flow name=\"record-import-success\">\n  <db:update config-ref=\"Orders_DB\" target=\"written\">\n    <db:sql><![CDATA[MERGE INTO import_outcomes(order_id,status) KEY(order_id) VALUES (:id,'processed')]]></db:sql>\n    <db:input-parameters><![CDATA[#[{id: payload.orderId}]]]></db:input-parameters>\n  </db:update>\n</sub-flow>",
+    "status": "local-runtime-verified",
+    "number": 57,
+    "chapter": 21,
+    "sha256": "53a4541fd11e3bce3142591732d4742249aaa439fb25ba4bed9835a5fbf4bb2e",
+    "prerequisites": [
+      "chapter-20"
+    ],
+    "fixtures": [
+      "fixtures/import-records.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 21",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Valid record identity is merged to processed"
+  },
+  {
+    "slug": "record-import-rejection",
+    "title": "Record a rejected import row",
+    "checkpoint": 21,
+    "source": "checkpoints/21-batch-import/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<sub-flow name=\"record-import-rejection\">\n  <db:update config-ref=\"Orders_DB\" target=\"written\">\n    <db:sql><![CDATA[MERGE INTO import_outcomes(order_id,status) KEY(order_id) VALUES (:id,'rejected')]]></db:sql>\n    <db:input-parameters><![CDATA[#[{id: payload.orderId}]]]></db:input-parameters>\n  </db:update>\n</sub-flow>",
+    "status": "local-runtime-verified",
+    "number": 58,
+    "chapter": 21,
+    "sha256": "53a4541fd11e3bce3142591732d4742249aaa439fb25ba4bed9835a5fbf4bb2e",
+    "prerequisites": [
+      "chapter-20"
+    ],
+    "fixtures": [
+      "fixtures/import-records.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 21",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Failed quantity identity is merged to rejected"
+  },
+  {
+    "slug": "cached-catalogue",
+    "title": "Cache a catalogue separately for each tenant",
+    "checkpoint": 22,
+    "source": "checkpoints/22-cache-and-state/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"cached-catalogue\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/lab/catalogue/{tenant}\" allowedMethods=\"GET\"/>\n  <set-variable variableName=\"tenant\" value=\"#[attributes.uriParams.tenant]\"/>\n  <choice><when expression=\"#[not (['retailer-a','retailer-b'] contains vars.tenant)]\"><raise-error type=\"APP:INVALID_TENANT\" description=\"Synthetic tenant must be from the fixture\"/></when></choice>\n  <set-variable variableName=\"cacheKey\" value=\"#[&#x27;prices-v1:&#x27; ++ vars.tenant]\"/>\n  <ee:cache cachingStrategy-ref=\"Catalogue_Cache\">\n    <http:request config-ref=\"Dependency_HTTP\" method=\"GET\" path=\"/catalogue\">\n      <http:query-params>#[{tenant: vars.tenant}]</http:query-params>\n    </http:request>\n  </ee:cache>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 59,
+    "chapter": 22,
+    "sha256": "773ac6e515e38f1297e762d328d6f190cc24a2d03be8f9c668972968ffb38b18",
+    "prerequisites": [
+      "chapter-21"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 22",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "A twice and B once use two source calls with distinct tenant prices"
+  },
+  {
+    "slug": "invalidate-one-tenant",
+    "title": "Invalidate one tenant catalogue",
+    "checkpoint": 22,
+    "source": "checkpoints/22-cache-and-state/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"invalidate-one-tenant\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/lab/cache/{tenant}\" allowedMethods=\"DELETE\"/>\n  <ee:invalidate-key cachingStrategy-ref=\"Catalogue_Cache\" keyGenerationExpression=\"#['prices-v1:' ++ attributes.uriParams.tenant]\"/>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  {invalidated: true}\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 60,
+    "chapter": 22,
+    "sha256": "773ac6e515e38f1297e762d328d6f190cc24a2d03be8f9c668972968ffb38b18",
+    "prerequisites": [
+      "chapter-21"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 22",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Invalidate A, then read it: source calls rise from two to three"
+  },
+  {
+    "slug": "store-note",
+    "title": "Store and retrieve a local note",
+    "checkpoint": 22,
+    "source": "checkpoints/22-cache-and-state/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"store-note\">\n  <http:listener config-ref=\"HTTP_Listener\" path=\"/lab/store\" allowedMethods=\"POST\"/>\n  <os:store objectStore=\"Small_Store\" key=\"note\"><os:value>#[payload]</os:value></os:store>\n  <os:retrieve objectStore=\"Small_Store\" key=\"note\"/>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  payload\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 61,
+    "chapter": 22,
+    "sha256": "773ac6e515e38f1297e762d328d6f190cc24a2d03be8f9c668972968ffb38b18",
+    "prerequisites": [
+      "chapter-21"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 22",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Stored synthetic note is retrieved as the same object"
+  },
+  {
+    "slug": "local-test-principal",
+    "title": "Supply a local test principal",
+    "checkpoint": 23,
+    "source": "checkpoints/23-order-ownership/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<sub-flow name=\"local-test-principal\">\n  <set-variable variableName=\"principal\" value=\"#[{tenantId: p(&#x27;local.testTenant&#x27;)}]\"/>\n  <flow-ref name=\"require-tenant\"/>\n</sub-flow>",
+    "status": "local-runtime-verified",
+    "number": 62,
+    "chapter": 23,
+    "sha256": "8d77f1e6ab5d49ddd59a20434514d414a9a33a89342cf769398e9e4cbd944576",
+    "prerequisites": [
+      "chapter-22"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 23",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Configuration supplies synthetic retailer-a principal"
+  },
+  {
+    "slug": "require-tenant",
+    "title": "Require a caller tenant",
+    "checkpoint": 23,
+    "source": "checkpoints/23-order-ownership/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<sub-flow name=\"require-tenant\">\n  <choice>\n    <when expression=\"#[not ((vars.principal.tenantId default null) is String)]\"><raise-error type=\"APP:UNAUTHENTICATED\" description=\"Trusted tenant required\"/></when>\n    <when expression=\"#[isEmpty(vars.principal.tenantId)]\"><raise-error type=\"APP:UNAUTHENTICATED\" description=\"Trusted tenant required\"/></when>\n  </choice>\n</sub-flow>",
+    "status": "local-runtime-verified",
+    "number": 63,
+    "chapter": 23,
+    "sha256": "8d77f1e6ab5d49ddd59a20434514d414a9a33a89342cf769398e9e4cbd944576",
+    "prerequisites": [
+      "chapter-22"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 23",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Missing principal is rejected with 401"
+  },
+  {
+    "slug": "get-owned-order",
+    "title": "Read an order within its owner tenant",
+    "checkpoint": 23,
+    "source": "checkpoints/23-order-ownership/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"get-order\">\n  <set-variable variableName=\"tenant\" value=\"#[vars.principal.tenantId]\"/>\n  <db:select config-ref=\"Orders_DB\">\n    <db:sql><![CDATA[SELECT response AS \"response\" FROM accepted_orders WHERE tenant_id = :tenant AND order_id = :id]]></db:sql>\n    <db:input-parameters><![CDATA[#[{tenant: vars.tenant, id: attributes.uriParams.orderId}]]]></db:input-parameters>\n  </db:select>\n  <choice><when expression=\"#[isEmpty(payload)]\"><raise-error type=\"APP:NOT_FOUND\" description=\"No visible order\"/></when></choice>\n  <ee:transform>\n    <ee:message>\n      <ee:set-payload><![CDATA[%dw 2.0\n  output application/json\n  ---\n  read(payload[0].response as String, \"application/json\")\n  ]]></ee:set-payload>\n    </ee:message>\n  </ee:transform>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 64,
+    "chapter": 23,
+    "sha256": "8d77f1e6ab5d49ddd59a20434514d414a9a33a89342cf769398e9e4cbd944576",
+    "prerequisites": [
+      "chapter-22"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 23",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Retailer B receives 404 for retailer A order"
+  },
+  {
+    "slug": "hello-over-tls",
+    "title": "Trust a local TLS server",
+    "source": "platform/tls/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<mule xmlns=\"http://www.mulesoft.org/schema/mule/core\"\n    xmlns:http=\"http://www.mulesoft.org/schema/mule/http\"\n    xmlns:tls=\"http://www.mulesoft.org/schema/mule/tls\"\n    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n    xsi:schemaLocation=\"\n      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd\n      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd\n      http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd\">\n  <http:listener-config name=\"TLS_Listener\">\n    <http:listener-connection host=\"127.0.0.1\" port=\"18884\" protocol=\"HTTPS\">\n      <tls:context enabledProtocols=\"TLSv1.2,TLSv1.3\">\n        <tls:key-store type=\"PKCS12\" path=\"server.p12\"\n            password=\"changeit\" keyPassword=\"changeit\"/>\n      </tls:context>\n    </http:listener-connection>\n  </http:listener-config>\n  <flow name=\"hello-over-tls\">\n    <http:listener config-ref=\"TLS_Listener\" path=\"/hello\" allowedMethods=\"GET\"/>\n    <set-payload value=\"Hello over TLS\"/>\n  </flow>\n</mule>",
+    "status": "local-runtime-verified",
+    "number": 65,
+    "chapter": 23,
+    "sha256": "528bfb11e2dbc4e6674e607b1c9f0dea829dc8c5de6e799955ffcbe575c1f4be",
+    "prerequisites": [
+      "chapter-22"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Explicit certificate trust returns Hello over TLS; default curl rejects with exit 60"
+  },
+  {
+    "slug": "orders-policy-plan",
+    "title": "Plan the orders policy boundary",
+    "source": "platform/policies/orders-policy-plan.yaml",
+    "language": "yaml",
+    "code": "# Operator worksheet; not an API Manager import format.\napiEntryFlow: orders-api\nidentity:\n  policy: JWT Validation\n  signingMethod: RSA\n  signingAlgorithm: RS256\n  keySource: JWKS\n  jwksUrl: https://issuer.example.com/.well-known/jwks.json\n  requiredClaims:\n    iss: https://issuer.example.com/\n    aud: orders-api\n    exp: future-instant\n    tenantId: authenticated-tenant-id\n  claimDestination: authentication.properties.claims\naccessTests:\n  - valid-token-and-owned-order\n  - missing-token\n  - expired-token\n  - wrong-audience\n  - missing-tenant\n  - other-tenant-order\n  - cold-start-before-policy-ready\n  - direct-listener-bypass\nquota:\n  policy: Rate Limiting\n  testAllowance: 3\n  windowSeconds: 60\n  identity: validated-consumer",
+    "status": "not-run",
+    "number": 66,
+    "chapter": 24,
+    "sha256": "6f07d10fccb33223156ebf59398b2f6ff2015cc1a3f618bb12ef8a45b948f7a0",
+    "prerequisites": [
+      "chapter-23"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Worksheet defines required identity/quota checks; it is not a policy import or enforcement result"
+  },
+  {
+    "slug": "cloud-deployment-inputs",
+    "title": "Identify a CloudHub deployment",
+    "source": "platform/cloudhub/deploy-inputs.example.properties",
+    "language": "properties",
+    "code": "# Template only: resolve from your account; no deployment has been performed.\nexchange.organizationId=REQUIRED_ORGANIZATION_ID\nexchange.repositoryUrl=https://maven.anypoint.mulesoft.com/api/v3/organizations/REQUIRED_ORGANIZATION_ID/maven\ndeploy.controlPlane=https://anypoint.mulesoft.com\ndeploy.environment=Sandbox\ndeploy.target=REQUIRED_TARGET\ndeploy.application=REQUIRED_UNIQUE_NAME\ndeploy.runtimeImage=REQUIRED_AVAILABLE_4_12_3_JAVA17_IMAGE\ndeploy.vCores=REQUIRED_CAPACITY\ndeploy.apiId=REQUIRED_API_INSTANCE\ndeploy.catalogueHost=REQUIRED_CATALOGUE_HOST\ndeploy.dbUrl=REQUIRED_POSTGRESQL_TLS_JDBC_URL\ndeploy.dbUser=REQUIRED_DATABASE_USER\n# Secrets: MULE_CONNECTED_APP_ID, MULE_CONNECTED_APP_SECRET, ORDERS_DB_PASSWORD.\n# This file documents inputs; Maven does not automatically load it.",
+    "status": "not-run",
+    "number": 67,
+    "chapter": 25,
+    "sha256": "35f5f9248f692d7c0583a901764efaa9d03829abd2ec2deb009a6a8ec43634f4",
+    "prerequisites": [
+      "chapter-24"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Required platform inputs are named; deployment remains unrun"
+  },
+  {
+    "slug": "log-committed-order",
+    "title": "Log committed acceptance or replay",
+    "checkpoint": 26,
+    "source": "checkpoints/26-order-investigation/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<flow name=\"create-order\">\n  <set-variable variableName=\"tenant\" value=\"#[vars.principal.tenantId]\"/>\n  <flow-ref name=\"accept-once\"/>\n  <logger category=\"book.orders\" level=\"INFO\" message=\"#[write({event: if (vars.httpStatus == 201) 'order.accepted' else 'order.replayed', stage: 'committed', correlationId: correlationId, orderId: vars.result.orderId, tenantId: vars.tenant}, 'application/json', {indent: false})]\"/>\n</flow>",
+    "status": "local-runtime-verified",
+    "number": 68,
+    "chapter": 26,
+    "sha256": "066a1d70c0cad32d4b7a3f230b9fdec6c0db20a2ccaf7b6bca5bb440abd5b3e9",
+    "prerequisites": [
+      "chapter-25"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "python3 book/run.py verify 26",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Committed new acceptance logs order.accepted; replay logs order.replayed"
+  },
+  {
+    "slug": "orders-log-configuration",
+    "title": "Configure bounded local application logs",
+    "source": "checkpoints/26-order-investigation/src/main/resources/log4j2.xml",
+    "language": "xml",
+    "code": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Configuration status=\"WARN\">\n  <Appenders>\n    <RollingFile name=\"Orders\" fileName=\"${sys:mule.home}/logs/orders-learning.log\"\n        filePattern=\"${sys:mule.home}/logs/orders-learning-%i.log\">\n      <PatternLayout pattern=\"%d{ISO8601} %-5p [%t] %m%n\"/>\n      <Policies><SizeBasedTriggeringPolicy size=\"10 MB\"/></Policies>\n      <DefaultRolloverStrategy max=\"3\"/>\n    </RollingFile>\n  </Appenders>\n  <Loggers>\n    <Logger name=\"book.orders\" level=\"INFO\" additivity=\"false\"><AppenderRef ref=\"Orders\"/></Logger>\n    <Root level=\"INFO\"><AppenderRef ref=\"Orders\"/></Root>\n  </Loggers>\n</Configuration>",
+    "status": "not-run",
+    "number": 69,
+    "chapter": 26,
+    "sha256": "56e00e549b4533b4f9889b24215aee7e2ee2102c2484b6a9f1ef8802023f5860",
+    "prerequisites": [
+      "chapter-25"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Local log rotates at configured size and carries safe transition context"
+  },
+  {
+    "slug": "book-validation-pipeline",
+    "title": "Validate the companion in CI",
+    "source": "../.github/workflows/book-validation.yml",
+    "language": "yaml",
+    "code": "name: Book companion validation\non:\n  push:\n    paths: ['book/**', '.github/workflows/book-validation.yml', 'settings.xml']\n  pull_request:\n    paths: ['book/**', '.github/workflows/book-validation.yml', 'settings.xml']\n  workflow_dispatch:\npermissions:\n  contents: read\njobs:\n  validate:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-java@v4\n        with:\n          distribution: temurin\n          java-version: '17'\n          cache: maven\n      - uses: stCarolas/setup-maven@v5\n        with:\n          maven-version: 3.9.4\n      - name: Check catalog and complete sources\n        run: python3 book/check_catalog.py\n      - name: Run the actual lesson MUnit suites\n        run: |\n          python3 book/run.py test 6\n          python3 book/run.py test 10\n          python3 book/check_reports.py\n      - name: Package the recovery candidate\n        run: |\n          python3 book/run.py package 30\n          python3 book/release_digest.py book/checkpoints/30-recovery-capstone/target/orders-learning-2.0.0-mule-application.jar\n      - name: Retain evidence\n        if: always()\n        uses: actions/upload-artifact@v4\n        with:\n          name: book-validation-evidence\n          if-no-files-found: error\n          path: |\n            book/checkpoints/06-first-tests/target/surefire-reports/\n            book/checkpoints/10-enrichment-tests/target/surefire-reports/\n            book/checkpoints/30-recovery-capstone/target/*.jar\n            book/actual/release.json",
+    "status": "not-run",
+    "number": 70,
+    "chapter": 27,
+    "sha256": "abc45c267f54a6a711fdceed45aeb03316ae03108c8be547160ecc02422e1ada",
+    "prerequisites": [
+      "chapter-26"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Validation-only workflow calls catalogue, MUnit/report checks and candidate packaging; hosted run not claimed"
+  },
+  {
+    "slug": "required-munit-reports",
+    "title": "Reject missing or empty test evidence",
+    "source": "check_reports.py",
+    "language": "python",
+    "code": "#!/usr/bin/env python3\n\"\"\"Fail if required lesson MUnit reports are absent, empty or failing.\"\"\"\nfrom pathlib import Path\nimport xml.etree.ElementTree as ET\nB = Path(__file__).resolve().parent\nfor folder, minimum in [('06-first-tests', 2), ('10-enrichment-tests', 1)]:\n    reports = list((B / 'checkpoints' / folder / 'target/surefire-reports').glob('TEST-*.xml'))\n    assert reports, f'No MUnit reports for {folder}'\n    counts = dict(tests=0, failures=0, errors=0, skipped=0)\n    for report in reports:\n        root = ET.parse(report).getroot()\n        for key in counts:\n            counts[key] += int(root.get(key, '0'))\n    assert counts['tests'] - counts['skipped'] >= minimum, (folder, counts)\n    assert counts['failures'] == counts['errors'] == counts['skipped'] == 0, (folder, counts)\n    print(folder, counts)",
+    "status": "local-command-verified",
+    "number": 71,
+    "chapter": 27,
+    "sha256": "c71dbbaf9fbf43e811026ac3db743410deb27f73645d09bcdd7dd499480bff43",
+    "prerequisites": [
+      "chapter-26"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Requires two plus one executed MUnit tests and no failures/errors/skips; rejects four negative controls"
+  },
+  {
+    "slug": "candidate-digest",
+    "title": "Record a candidate digest",
+    "source": "release_digest.py",
+    "language": "python",
+    "code": "#!/usr/bin/env python3\n\"\"\"Record the exact candidate bytes without rebuilding them.\"\"\"\nimport hashlib, json, subprocess, sys\nfrom pathlib import Path\nB = Path(__file__).resolve().parent\nartifact = Path(sys.argv[1]).resolve()\nassert artifact.is_file(), artifact\nrecord = {'artifact': artifact.name, 'sha256': hashlib.sha256(artifact.read_bytes()).hexdigest(),\n          'commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=B, text=True).strip(),\n          'runtime': '4.12.3', 'javaMajor': 17,\n          'sourceWorktreeDirty': bool(subprocess.check_output(['git', 'status', '--porcelain'], cwd=B, text=True).strip()),\n          'boundary': 'local candidate; not Exchange publication or cloud acceptance'}\n(B / 'actual').mkdir(exist_ok=True)\n(B / 'actual/release.json').write_text(json.dumps(record, indent=2) + '\\n')\nprint(json.dumps(record, indent=2))",
+    "status": "local-command-verified",
+    "number": 72,
+    "chapter": 27,
+    "sha256": "1be568db54765608665fa8d695cf465d701f7c851173d9910bf634d5b8344817",
+    "prerequisites": [
+      "chapter-26"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Records SHA-256 of the exact candidate archive without rebuilding"
+  },
+  {
+    "slug": "partial-order-status",
+    "title": "Design a partial order-status response",
+    "source": "workshops/architecture/status-view.json",
+    "language": "json",
+    "code": "{\n  \"orderId\": \"STATUS-2001\",\n  \"tenantId\": \"retailer-a\",\n  \"orderStatus\": \"SHIPPED\",\n  \"shipment\": null,\n  \"shipmentAvailable\": false\n}",
+    "status": "design-fixture",
+    "number": 73,
+    "chapter": 28,
+    "sha256": "1179ad93966e4cf7d8722a94a1db0d0dc1ffb42a56919236afe14883913b5a33",
+    "prerequisites": [
+      "chapter-27"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Designed status view preserves SHIPPED with shipmentAvailable false; not acceptance output"
+  },
+  {
+    "slug": "local-orders-gateway",
+    "title": "Route the known orders API through Omni Gateway",
+    "source": "platform/omni/orders.yaml",
+    "language": "yaml",
+    "code": "apiVersion: gateway.mulesoft.com/v1alpha1\nkind: ApiInstance\nmetadata:\n  name: local-orders\nspec:\n  address: http://0.0.0.0:8080\n  services:\n    orders:\n      address: http://host.docker.internal:18881/\n      routes:\n        - rules:\n            - path: /api/orders(/.*)\n  policies:\n    - policyRef:\n        name: rate-limiting-flex\n      config:\n        rateLimits:\n          - maximumRequests: 5\n            timePeriodInMilliseconds: 60000\n        keySelector: \"#[attributes.method]\"\n        clusterizable: false\n        exposeHeaders: true",
+    "status": "not-run",
+    "number": 74,
+    "chapter": 29,
+    "sha256": "18d646e84c98efd2af93fba4072d211778fb2136205c3c3bad97fc3634ed32e7",
+    "prerequisites": [
+      "chapter-28"
+    ],
+    "fixtures": [
+      "fixtures/order-command.json"
+    ],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Expected unchanged API path and per-method/per-replica quota; gateway traffic unrun"
+  },
+  {
+    "slug": "response-message-workshop",
+    "title": "Retain response status with its body",
+    "source": "workshops/representations/src/main/mule/app.xml",
+    "language": "xml",
+    "code": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<mule xmlns=\"http://www.mulesoft.org/schema/mule/core\"\n    xmlns:http=\"http://www.mulesoft.org/schema/mule/http\"\n    xmlns:ee=\"http://www.mulesoft.org/schema/mule/ee/core\"\n    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n    xsi:schemaLocation=\"\n      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd\n      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd\n      http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd\">\n  <configuration-properties file=\"config-local.yaml\"/>\n  <http:listener-config name=\"HTTP_Listener\">\n    <http:listener-connection host=\"${http.host}\" port=\"${http.port}\"/>\n  </http:listener-config>\n  <http:request-config name=\"Dependency_HTTP\" responseTimeout=\"2000\">\n    <http:request-connection host=\"${dependency.host}\" port=\"${dependency.port}\"/>\n  </http:request-config>\n  <flow name=\"retain-response-message\">\n    <http:listener config-ref=\"HTTP_Listener\" path=\"/message\" allowedMethods=\"POST\"/>\n    <http:request config-ref=\"Dependency_HTTP\" method=\"GET\" path=\"/customers/C-42\"\n        target=\"customerReply\" targetValue=\"#[message]\"/>\n    <ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0\noutput application/json\n---\n{orderId: payload.orderId, customer: vars.customerReply.payload.name,\n upstreamStatus: vars.customerReply.attributes.statusCode}\n]]></ee:set-payload></ee:message></ee:transform>\n  </flow>\n  <flow name=\"normalize-xml-order\">\n    <http:listener config-ref=\"HTTP_Listener\" path=\"/xml\" allowedMethods=\"POST\"/>\n    <ee:transform><ee:message><ee:set-payload resource=\"normalize-xml.dwl\"/></ee:message></ee:transform>\n  </flow>\n  <flow name=\"use-pricing-module\">\n    <http:listener config-ref=\"HTTP_Listener\" path=\"/module\" allowedMethods=\"POST\"/>\n    <ee:transform><ee:message><ee:set-payload resource=\"total.dwl\"/></ee:message></ee:transform>\n  </flow>\n  <flow name=\"inspect-java-value\">\n    <http:listener config-ref=\"HTTP_Listener\" path=\"/java\" allowedMethods=\"GET\"/>\n    <ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0\noutput application/java\n---\n{orderId: \"A-1001\", total: 32}\n]]></ee:set-payload></ee:message></ee:transform>\n    <ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0\noutput application/json\n---\n{orderId: payload.orderId, total: payload.total, className: payload.^class}\n]]></ee:set-payload></ee:message></ee:transform>\n  </flow>\n</mule>",
+    "status": "local-runtime-verified",
+    "number": 75,
+    "chapter": 32,
+    "sha256": "ba2b6bd03b96ee310729f65a7870258480086139556fa64072c197245a9d338a",
+    "prerequisites": [
+      "see-workshop-prerequisites"
+    ],
+    "fixtures": [],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Runtime workshop returns retained A-1001, Dana and upstreamStatus 200; also supplies XML/module/Java routes"
+  },
+  {
+    "slug": "xml-order-adapter",
+    "title": "Normalize repeated XML items",
+    "source": "workshops/representations/src/main/resources/normalize-xml.dwl",
+    "language": "dataweave",
+    "code": "%dw 2.0\noutput application/json\n---\n{orderId: payload.order.@id,\n items: payload.order.*item map (item) -> {\n   sku: item.@sku, price: item.price as Number, qty: item.qty as Number\n }}",
+    "status": "local-runtime-verified",
+    "number": 76,
+    "chapter": 32,
+    "sha256": "6d5869e659bda4fb3ec0ac71126be373a7c10c733113f230e470e26b7c3e74f1",
+    "prerequisites": [
+      "see-workshop-prerequisites"
+    ],
+    "fixtures": [],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "XML attributes and repeated elements normalize to the same three numeric order lines"
+  },
+  {
+    "slug": "pricing-module",
+    "title": "Extract a pure pricing helper",
+    "source": "workshops/representations/src/main/resources/modules/Pricing.dwl",
+    "language": "dataweave",
+    "code": "%dw 2.0\nfun lineTotal(item) = item.price * item.qty\nfun orderTotal(items) = sum(items map (item) -> lineTotal(item))",
+    "status": "local-runtime-verified",
+    "number": 77,
+    "chapter": 32,
+    "sha256": "638ff67d97c96082e15d59e4d92e03ad3d636f3ec565caa567a4a22d5dba5e14",
+    "prerequisites": [
+      "see-workshop-prerequisites"
+    ],
+    "fixtures": [],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Pure helper calculates each line and sums items"
+  },
+  {
+    "slug": "import-pricing-module",
+    "title": "Call the imported pricing helper",
+    "source": "workshops/representations/src/main/resources/total.dwl",
+    "language": "dataweave",
+    "code": "%dw 2.0\nimport orderTotal from modules::Pricing\noutput application/json\n---\n{orderId: payload.orderId, total: orderTotal(payload.items)}",
+    "status": "local-runtime-verified",
+    "number": 78,
+    "chapter": 32,
+    "sha256": "283937098bff4471453965c9c8b724334aa80f3620078527895fb7081936327a",
+    "prerequisites": [
+      "see-workshop-prerequisites"
+    ],
+    "fixtures": [],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Imported helper returns A-1001 and total 32"
+  },
+  {
+    "slug": "historical-java-numbers",
+    "title": "Inspect two Java numeric values",
+    "source": "workshops/historical-formats/java-numbers.xml",
+    "language": "xml",
+    "code": "<!-- Historical excerpt. Complete project: repository root; runtime evidence: results/. -->\n<flow name=\"javaFormat\"><http:listener config-ref=\"httpListenerConfig\" path=\"/lab/java\"/><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0\noutput application/java\n---\n{integer:42,decimal:1.5}\n]]></ee:set-payload></ee:message></ee:transform><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0\noutput application/json\n---\n{integerClass:payload.integer.^class,decimalClass:payload.decimal.^class}\n]]></ee:set-payload></ee:message></ee:transform></flow>",
+    "status": "historical-run-2026-09-13",
+    "number": 79,
+    "chapter": 32,
+    "sha256": "d76e24abdbcb9fd3eff74b8ac245b88522502e07c5847b1513a231c49125b467",
+    "prerequisites": [
+      "see-workshop-prerequisites"
+    ],
+    "fixtures": [],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Historical 42 maps to Integer and 1.5 to Double; not a universal mapping table"
+  },
+  {
+    "slug": "historical-deferred-json",
+    "title": "Consume deferred JSON at the listener",
+    "source": "workshops/historical-formats/deferred-json.xml",
+    "language": "xml",
+    "code": "<!-- Historical excerpt. Complete project: repository root; runtime evidence: results/. -->\n<flow name=\"deferred\"><http:listener config-ref=\"httpListenerConfig\" path=\"/lab/deferred\" allowedMethods=\"POST\"/><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0\ninput payload application/json streaming=true\noutput application/json deferred=true\n---\npayload map (order) -> {id:order.orderId,total:order.total}\n]]></ee:set-payload></ee:message></ee:transform></flow>",
+    "status": "historical-run-2026-09-13",
+    "number": 80,
+    "chapter": 32,
+    "sha256": "e92b25c549dc52bc9005ac2f8cd0c74c9e9193fae788d68a48037a1443a8c903",
+    "prerequisites": [
+      "see-workshop-prerequisites"
+    ],
+    "fixtures": [],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Historical deferred JSON probe; consumer timing is distinct from eager transformation"
+  },
+  {
+    "slug": "historical-excel-roundtrip",
+    "title": "Round-trip a small Excel sheet",
+    "source": "workshops/historical-formats/excel-roundtrip.xml",
+    "language": "xml",
+    "code": "<!-- Historical excerpt. Complete project: repository root; runtime evidence: results/. -->\n<flow name=\"xlsxFormat\"><http:listener config-ref=\"httpListenerConfig\" path=\"/lab/xlsx\"/><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0\noutput application/json\nvar bytes = write({Orders:[{id:\"A-1001\",total:32}]},\"application/xlsx\")\n---\nread(bytes,\"application/xlsx\")\n]]></ee:set-payload></ee:message></ee:transform></flow>",
+    "status": "historical-run-2026-09-13",
+    "number": 81,
+    "chapter": 32,
+    "sha256": "9885e8529e54c781375eb381343e09bd84162474c22b0e32e23c5165d3c5b4dc",
+    "prerequisites": [
+      "see-workshop-prerequisites"
+    ],
+    "fixtures": [],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Historical small workbook round trip; not a workbook fidelity or scale claim"
+  },
+  {
+    "slug": "historical-fixed-width",
+    "title": "Read a fixed-width schema",
+    "source": "workshops/historical-formats/fixed-width.xml",
+    "language": "xml",
+    "code": "<!-- Historical excerpt. Complete project: repository root; runtime evidence: results/. -->\n<flow name=\"flatfileFormat\"><http:listener config-ref=\"httpListenerConfig\" path=\"/lab/flatfile\"/><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0\noutput application/json\n---\nreadUrl(\"classpath://customers.txt\", \"application/flatfile\", {schemaPath:\"customers.ffd\"})\n]]></ee:set-payload></ee:message></ee:transform></flow>",
+    "status": "historical-run-2026-09-13",
+    "number": 82,
+    "chapter": 32,
+    "sha256": "634ad6e8a6b0cd8cec0f27fdc114033846b2afe9c795f13f563121313e5daf88",
+    "prerequisites": [
+      "see-workshop-prerequisites"
+    ],
+    "fixtures": [],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Historical fixed-width reader uses the supplied schema and fixture"
+  },
+  {
+    "slug": "orders-openapi-contract",
+    "title": "Describe order acceptance in OpenAPI",
+    "source": "workshops/contracts/orders.openapi.yaml",
+    "language": "yaml",
+    "code": "{\n  \"openapi\": \"3.0.3\",\n  \"info\": {\n    \"title\": \"Orders acceptance contract workshop\",\n    \"version\": \"1.0.0\"\n  },\n  \"servers\": [\n    {\n      \"url\": \"http://127.0.0.1:18881/api\"\n    }\n  ],\n  \"paths\": {\n    \"/orders\": {\n      \"post\": {\n        \"operationId\": \"acceptOrder\",\n        \"requestBody\": {\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/OrderCommand\"\n              },\n              \"example\": {\n                \"orderId\": \"A-1001\",\n                \"items\": [\n                  {\n                    \"sku\": \"PEN-01\",\n                    \"qty\": 4\n                  },\n                  {\n                    \"sku\": \"PAD-22\",\n                    \"qty\": 2\n                  },\n                  {\n                    \"sku\": \"CLP-08\",\n                    \"qty\": 10\n                  }\n                ]\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Recorded result\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/OrderResponse\"\n                }\n              }\n            }\n          },\n          \"201\": {\n            \"description\": \"Accepted order\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/OrderResponse\"\n                }\n              }\n            }\n          },\n          \"400\": {\n            \"description\": \"Invalid command\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Problem\"\n                }\n              }\n            }\n          },\n          \"401\": {\n            \"description\": \"Missing application principal\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Problem\"\n                }\n              }\n            }\n          },\n          \"409\": {\n            \"description\": \"Command conflict\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Problem\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"Internal failure\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Problem\"\n                }\n              }\n            }\n          },\n          \"503\": {\n            \"description\": \"Dependency unavailable\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Problem\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/orders/{orderId}\": {\n      \"parameters\": [\n        {\n          \"name\": \"orderId\",\n          \"in\": \"path\",\n          \"required\": true,\n          \"schema\": {\n            \"type\": \"string\",\n            \"pattern\": \"^[A-Za-z0-9-]{1,40}$\"\n          }\n        }\n      ],\n      \"get\": {\n        \"operationId\": \"getOrder\",\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Recorded result\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/OrderResponse\"\n                }\n              }\n            }\n          },\n          \"401\": {\n            \"description\": \"Missing application principal\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Problem\"\n                }\n              }\n            }\n          },\n          \"404\": {\n            \"description\": \"Order not found\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Problem\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"Internal failure\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Problem\"\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  },\n  \"components\": {\n    \"schemas\": {\n      \"OrderCommand\": {\n        \"type\": \"object\",\n        \"additionalProperties\": false,\n        \"required\": [\n          \"orderId\",\n          \"items\"\n        ],\n        \"properties\": {\n          \"orderId\": {\n            \"type\": \"string\",\n            \"pattern\": \"^[A-Za-z0-9-]{1,40}$\"\n          },\n          \"items\": {\n            \"type\": \"array\",\n            \"minItems\": 1,\n            \"maxItems\": 20,\n            \"items\": {\n              \"type\": \"object\",\n              \"additionalProperties\": false,\n              \"required\": [\n                \"sku\",\n                \"qty\"\n              ],\n              \"properties\": {\n                \"sku\": {\n                  \"type\": \"string\",\n                  \"enum\": [\n                    \"PEN-01\",\n                    \"PAD-22\",\n                    \"CLP-08\"\n                  ]\n                },\n                \"qty\": {\n                  \"type\": \"integer\",\n                  \"minimum\": 1,\n                  \"maximum\": 1000\n                }\n              }\n            }\n          }\n        }\n      },\n      \"OrderResponse\": {\n        \"type\": \"object\",\n        \"additionalProperties\": false,\n        \"required\": [\n          \"orderId\",\n          \"tenantId\",\n          \"currency\",\n          \"state\",\n          \"total\",\n          \"items\"\n        ],\n        \"properties\": {\n          \"orderId\": {\n            \"type\": \"string\"\n          },\n          \"tenantId\": {\n            \"type\": \"string\"\n          },\n          \"currency\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \"USD\"\n            ]\n          },\n          \"state\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \"ACCEPTED\"\n            ]\n          },\n          \"total\": {\n            \"type\": \"number\"\n          },\n          \"items\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"object\",\n              \"additionalProperties\": false,\n              \"required\": [\n                \"sku\",\n                \"qty\",\n                \"unitPrice\",\n                \"lineTotal\"\n              ],\n              \"properties\": {\n                \"sku\": {\n                  \"type\": \"string\"\n                },\n                \"qty\": {\n                  \"type\": \"integer\"\n                },\n                \"unitPrice\": {\n                  \"type\": \"number\"\n                },\n                \"lineTotal\": {\n                  \"type\": \"number\"\n                }\n              }\n            }\n          }\n        }\n      },\n      \"Problem\": {\n        \"type\": \"object\",\n        \"additionalProperties\": false,\n        \"required\": [\n          \"error\"\n        ],\n        \"properties\": {\n          \"error\": {\n            \"type\": \"string\"\n          }\n        }\n      }\n    }\n  }\n}",
+    "status": "schema-reviewed-not-routed",
+    "number": 83,
+    "chapter": 32,
+    "sha256": "e5a48f28f1d6fd7f1a79f429546a230a9045e456cf37cccd18c9ec8ce066a7a8",
+    "prerequisites": [
+      "see-workshop-prerequisites"
+    ],
+    "fixtures": [],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Alternative OAS document matches recovery command/response intent; not routed in APIkit"
+  },
+  {
+    "slug": "standalone-shared-listener",
+    "title": "Allocate a standalone shared listener",
+    "source": "workshops/domains/shared-listener.xml",
+    "language": "xml",
+    "code": "<domain:mule-domain\n    xmlns:domain=\"http://www.mulesoft.org/schema/mule/ee/domain\"\n    xmlns:http=\"http://www.mulesoft.org/schema/mule/http\"\n    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n    xsi:schemaLocation=\"\n      http://www.mulesoft.org/schema/mule/ee/domain\n      http://www.mulesoft.org/schema/mule/ee/domain/current/mule-domain-ee.xsd\n      http://www.mulesoft.org/schema/mule/http\n      http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd\">\n  <http:listener-config name=\"Shared_HTTP\">\n    <http:listener-connection host=\"0.0.0.0\" port=\"8081\"/>\n  </http:listener-config>\n</domain:mule-domain>",
+    "status": "configuration-fragment-not-deployed",
+    "number": 84,
+    "chapter": 33,
+    "sha256": "ac20cbe9d587a97a71b0f290b8664000bda67b0ccdd5e66df676af7c16a7b23f",
+    "prerequisites": [
+      "see-workshop-prerequisites"
+    ],
+    "fixtures": [],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Domain resource configuration allocates a shared listener; complete domain deployment unrun"
+  },
+  {
+    "slug": "ordered-watermark-page",
+    "title": "Select a page with a stable tiebreaker",
+    "source": "workshops/synchronization/page.sql",
+    "language": "sql",
+    "code": "SELECT id, updated_at, total\nFROM orders\nWHERE updated_at > :last_time\n   OR (updated_at = :last_time AND id > :last_id)\nORDER BY updated_at, id\nLIMIT :page_size",
+    "status": "query-template-not-executed",
+    "number": 85,
+    "chapter": 34,
+    "sha256": "3dea47181e392325eb29a81672cb5d530b448c781666b792ca555380b0302f17",
+    "prerequisites": [
+      "see-workshop-prerequisites"
+    ],
+    "fixtures": [],
+    "verification": {
+      "command": "See source project README and verification record",
+      "record": "verification/2026-09-20.md"
+    },
+    "expectedResult": "Query orders rows lexicographically by updated_at and id; source/driver execution unrun"
+  }
+]

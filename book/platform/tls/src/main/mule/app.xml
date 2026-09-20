@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:http="http://www.mulesoft.org/schema/mule/http"
+    xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+      http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+  <http:listener-config name="TLS_Listener">
+    <http:listener-connection host="127.0.0.1" port="18884" protocol="HTTPS">
+      <tls:context enabledProtocols="TLSv1.2,TLSv1.3">
+        <tls:key-store type="PKCS12" path="server.p12"
+            password="changeit" keyPassword="changeit"/>
+      </tls:context>
+    </http:listener-connection>
+  </http:listener-config>
+  <flow name="hello-over-tls">
+    <http:listener config-ref="TLS_Listener" path="/hello" allowedMethods="GET"/>
+    <set-payload value="Hello over TLS"/>
+  </flow>
+</mule>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+  <Appenders>
+    <RollingFile name="Orders" fileName="${sys:mule.home}/logs/orders-learning.log"
+        filePattern="${sys:mule.home}/logs/orders-learning-%i.log">
+      <PatternLayout pattern="%d{ISO8601} %-5p [%t] %m%n"/>
+      <Policies><SizeBasedTriggeringPolicy size="10 MB"/></Policies>
+      <DefaultRolloverStrategy max="3"/>
+    </RollingFile>
+  </Appenders>
+  <Loggers>
+    <Logger name="book.orders" level="INFO" additivity="false"><AppenderRef ref="Orders"/></Logger>
+    <Root level="INFO"><AppenderRef ref="Orders"/></Root>
+  </Loggers>
+</Configuration>

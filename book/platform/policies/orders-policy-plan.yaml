@@ -1,0 +1,28 @@
+# Operator worksheet; not an API Manager import format.
+apiEntryFlow: orders-api
+identity:
+  policy: JWT Validation
+  signingMethod: RSA
+  signingAlgorithm: RS256
+  keySource: JWKS
+  jwksUrl: https://issuer.example.com/.well-known/jwks.json
+  requiredClaims:
+    iss: https://issuer.example.com/
+    aud: orders-api
+    exp: future-instant
+    tenantId: authenticated-tenant-id
+  claimDestination: authentication.properties.claims
+accessTests:
+  - valid-token-and-owned-order
+  - missing-token
+  - expired-token
+  - wrong-audience
+  - missing-tenant
+  - other-tenant-order
+  - cold-start-before-policy-ready
+  - direct-listener-bypass
+quota:
+  policy: Rate Limiting
+  testAllowance: 3
+  windowSeconds: 60
+  identity: validated-consumer

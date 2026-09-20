@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:http="http://www.mulesoft.org/schema/mule/http"
+    xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+      http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+  <http:listener-config name="HTTP_Listener">
+    <http:listener-connection host="127.0.0.1" port="18881"/>
+  </http:listener-config>
+  <configuration defaultErrorHandler-ref="Public_Errors"/>
+  <flow name="hello-mule">
+    <http:listener config-ref="HTTP_Listener" path="/hello" allowedMethods="GET"/>
+    <set-payload value="Hello, Mule!"/>
+  </flow>
+  <error-handler name="Public_Errors">
+    <on-error-propagate type="APP:INVALID_ORDER">
+      <set-variable variableName="httpStatus" value="#[400]"/>
+      <ee:transform>
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+      output application/json
+      ---
+      {error: "INVALID_ORDER"}
+      ]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+    </on-error-propagate>
+    <on-error-propagate type="ANY">
+      <set-variable variableName="httpStatus" value="#[500]"/>
+      <ee:transform>
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+      output application/json
+      ---
+      {error: "INTERNAL_ERROR"}
+      ]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+    </on-error-propagate>
+  </error-handler>
+  <sub-flow name="validate-order">
+    <choice>
+      <when expression="#[not (payload.orderId is String and
+      payload.items is Array and
+      (not isEmpty(payload.items)) and
+      isEmpty(payload.items filter (item) -&gt; not (item.qty is Number and item.qty &gt; 0 and floor(item.qty) == item.qty)))]"><raise-error type="APP:INVALID_ORDER" description="Order must contain positive integer quantities"/></when>
+      <otherwise><logger level="DEBUG" message="Order structure accepted by the local rule"/></otherwise>
+    </choice>
+  </sub-flow>
+  <flow name="typed-validation">
+    <http:listener config-ref="HTTP_Listener" path="/validate" allowedMethods="POST">
+      <http:response statusCode="#[vars.httpStatus default 200]"/>
+      <http:error-response statusCode="#[vars.httpStatus default 500]">
+        <http:body>#[payload]</http:body>
+      </http:error-response>
+    </http:listener>
+    <flow-ref name="validate-order"/>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    {orderId: payload.orderId, valid: true}
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+    <error-handler ref="Public_Errors"/>
+  </flow>
+  <flow name="recover-optional">
+    <http:listener config-ref="HTTP_Listener" path="/optional" allowedMethods="GET"/>
+    <try>
+      <raise-error type="APP:OPTIONAL" description="Controlled optional failure"/>
+      <set-payload value="unreachable"/>
+      <error-handler><on-error-continue type="APP:OPTIONAL"><set-payload value="fallback"/></on-error-continue></error-handler>
+    </try>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    {result: payload, reachedAfterTry: true}
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </flow>
+</mule>

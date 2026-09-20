@@ -1,0 +1,7 @@
+<!-- Historical excerpt. Complete project: repository root; runtime evidence: results/. -->
+<flow name="deferred"><http:listener config-ref="httpListenerConfig" path="/lab/deferred" allowedMethods="POST"/><ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+input payload application/json streaming=true
+output application/json deferred=true
+---
+payload map (order) -> {id:order.orderId,total:order.total}
+]]></ee:set-payload></ee:message></ee:transform></flow>

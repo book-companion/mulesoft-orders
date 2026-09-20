@@ -1,0 +1,6 @@
+http:
+  host: "127.0.0.1"
+  port: "18881"
+dependency:
+  host: "127.0.0.1"
+  port: "18882"

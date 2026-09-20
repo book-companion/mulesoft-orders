@@ -1,0 +1,112 @@
+#%RAML 1.0
+title: Local Orders API
+version: v1
+mediaType: application/json
+types:
+  OrderCommand:
+    type: object
+    additionalProperties: false
+    properties:
+      orderId:
+        type: string
+        pattern: ^[A-Za-z0-9-]{1,40}$
+      items:
+        type: array
+        minItems: 1
+        maxItems: 20
+        items:
+          type: object
+          additionalProperties: false
+          properties:
+            sku:
+              type: string
+              enum: [PEN-01, PAD-22, CLP-08]
+            qty:
+              type: integer
+              minimum: 1
+              maximum: 1000
+  OrderResponse:
+    type: object
+    additionalProperties: false
+    properties:
+      orderId: string
+      tenantId: string
+      currency:
+        type: string
+        enum: [USD]
+      state:
+        type: string
+        enum: [ACCEPTED]
+      total: number
+      items:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          properties:
+            sku: string
+            qty: integer
+            unitPrice: number
+            lineTotal: number
+  Problem:
+    type: object
+    additionalProperties: false
+    properties:
+      error: string
+/orders:
+  post:
+    body:
+      application/json:
+        type: OrderCommand
+    responses:
+      200:
+        body:
+          application/json:
+            type: OrderResponse
+      201:
+        body:
+          application/json:
+            type: OrderResponse
+      400:
+        body:
+          application/json:
+            type: Problem
+      401:
+        body:
+          application/json:
+            type: Problem
+      409:
+        body:
+          application/json:
+            type: Problem
+      500:
+        body:
+          application/json:
+            type: Problem
+      503:
+        body:
+          application/json:
+            type: Problem
+  /{orderId}:
+    uriParameters:
+      orderId:
+        type: string
+        pattern: ^[A-Za-z0-9-]{1,40}$
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: OrderResponse
+        401:
+          body:
+            application/json:
+              type: Problem
+        404:
+          body:
+            application/json:
+              type: Problem
+        500:
+          body:
+            application/json:
+              type: Problem

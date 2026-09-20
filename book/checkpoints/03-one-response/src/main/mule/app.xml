@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:http="http://www.mulesoft.org/schema/mule/http"
+    xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+      http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+  <http:listener-config name="HTTP_Listener">
+    <http:listener-connection host="127.0.0.1" port="18881"/>
+  </http:listener-config>
+  <flow name="hello-mule">
+    <http:listener config-ref="HTTP_Listener" path="/hello" allowedMethods="GET"/>
+    <set-payload value="Hello, Mule!"/>
+  </flow>
+  <flow name="read-order-header">
+    <http:listener config-ref="HTTP_Listener" path="/header" allowedMethods="POST"/>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    {reference: payload.orderId, buyer: payload.customer.name}
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </flow>
+  <flow name="calculate-line">
+    <http:listener config-ref="HTTP_Listener" path="/line" allowedMethods="POST"/>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    {lineTotal: payload.price * payload.qty}
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </flow>
+  <flow name="convert-line-price">
+    <http:listener config-ref="HTTP_Listener" path="/line/text" allowedMethods="POST"/>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    {lineTotal: (payload.price as Number) * payload.qty}
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </flow>
+</mule>

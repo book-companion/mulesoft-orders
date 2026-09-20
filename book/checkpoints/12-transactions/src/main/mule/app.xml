@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:http="http://www.mulesoft.org/schema/mule/http"
+    xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+    xmlns:db="http://www.mulesoft.org/schema/mule/db"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+      http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+      http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+  <http:listener-config name="HTTP_Listener">
+    <http:listener-connection host="127.0.0.1" port="18881"/>
+  </http:listener-config>
+  <flow name="hello-mule">
+    <http:listener config-ref="HTTP_Listener" path="/hello" allowedMethods="GET"/>
+    <set-payload value="Hello, Mule!"/>
+  </flow>
+  <db:config name="Orders_DB">
+    <db:generic-connection url="jdbc:h2:mem:orders_learning;DB_CLOSE_DELAY=-1"
+        driverClassName="org.h2.Driver" user="sa" password="#['']"/>
+  </db:config>
+  <flow name="prepare-orders">
+    <http:listener config-ref="HTTP_Listener" path="/lab/setup" allowedMethods="POST"/>
+    <db:execute-ddl config-ref="Orders_DB">
+      <db:sql><![CDATA[CREATE TABLE IF NOT EXISTS orders (order_id VARCHAR(40) PRIMARY KEY, customer VARCHAR(80), total DECIMAL(12,2))]]></db:sql>
+    </db:execute-ddl>
+    <db:delete config-ref="Orders_DB">
+      <db:sql><![CDATA[DELETE FROM orders]]></db:sql>
+    </db:delete>
+    <set-payload value="ready"/>
+  </flow>
+  <flow name="insert-order">
+    <http:listener config-ref="HTTP_Listener" path="/lab/orders" allowedMethods="POST"/>
+    <db:insert config-ref="Orders_DB" target="insertResult">
+      <db:sql><![CDATA[INSERT INTO orders(order_id,customer,total) VALUES (:id,:customer,:total)]]></db:sql>
+      <db:input-parameters><![CDATA[#[{id: payload.orderId, customer: payload.customer, total: payload.total}]]]></db:input-parameters>
+    </db:insert>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    {orderId: payload.orderId, affectedRows: vars.insertResult.affectedRows}
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </flow>
+  <flow name="read-order">
+    <http:listener config-ref="HTTP_Listener" path="/lab/orders/{id}" allowedMethods="GET"/>
+    <db:select config-ref="Orders_DB">
+      <db:sql><![CDATA[SELECT order_id AS "orderId", customer AS "customer", total AS "total" FROM orders WHERE order_id = :id]]></db:sql>
+      <db:input-parameters><![CDATA[#[{id: attributes.uriParams.id}]]]></db:input-parameters>
+    </db:select>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    payload
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </flow>
+  <flow name="rollback-order">
+    <http:listener config-ref="HTTP_Listener" path="/lab/rollback" allowedMethods="POST"/>
+    <try transactionalAction="ALWAYS_BEGIN" transactionType="LOCAL">
+      <db:insert config-ref="Orders_DB" transactionalAction="ALWAYS_JOIN">
+        <db:sql><![CDATA[INSERT INTO orders(order_id,customer,total) VALUES ('ROLLBACK','Dana',32)]]></db:sql>
+      </db:insert>
+      <raise-error type="APP:REJECTED" description="Injected failure"/>
+      <error-handler><on-error-propagate type="APP:REJECTED"/></error-handler>
+    </try>
+    <error-handler><on-error-continue type="APP:REJECTED"><set-payload value="rolled back"/></on-error-continue></error-handler>
+  </flow>
+  <flow name="continue-in-owner">
+    <http:listener config-ref="HTTP_Listener" path="/lab/continue" allowedMethods="POST"/>
+    <try transactionalAction="ALWAYS_BEGIN" transactionType="LOCAL">
+      <db:insert config-ref="Orders_DB" transactionalAction="ALWAYS_JOIN">
+        <db:sql><![CDATA[INSERT INTO orders(order_id,customer,total) VALUES ('CONTINUE-INNER','Dana',32)]]></db:sql>
+      </db:insert>
+      <raise-error type="APP:REJECTED" description="Injected failure"/>
+      <error-handler><on-error-continue type="APP:REJECTED"><set-payload value="handled inside"/></on-error-continue></error-handler>
+    </try>
+  </flow>
+</mule>

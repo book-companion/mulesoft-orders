@@ -1,0 +1,6 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0">
+  <servers><server><id>exchange-releases</id>
+    <username>~~~Client~~~</username>
+    <password>${env.MULE_CONNECTED_APP_ID}~?~${env.MULE_CONNECTED_APP_SECRET}</password>
+  </server></servers>
+</settings>

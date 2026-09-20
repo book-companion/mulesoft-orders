@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:http="http://www.mulesoft.org/schema/mule/http"
+    xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+    xmlns:db="http://www.mulesoft.org/schema/mule/db"
+    xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+      http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+      http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+      http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd">
+  <configuration-properties file="config-local.yaml"/>
+  <http:listener-config name="HTTP_Listener">
+    <http:listener-connection host="${http.host}" port="${http.port}"/>
+  </http:listener-config>
+  <http:request-config name="Dependency_HTTP" responseTimeout="2000">
+    <http:request-connection host="${dependency.host}" port="${dependency.port}"/>
+  </http:request-config>
+  <flow name="hello-mule">
+    <http:listener config-ref="HTTP_Listener" path="/hello" allowedMethods="GET"/>
+    <set-payload value="Hello, Mule!"/>
+  </flow>
+  <db:config name="Orders_DB">
+    <db:generic-connection url="jdbc:h2:mem:orders_learning;DB_CLOSE_DELAY=-1"
+        driverClassName="org.h2.Driver" user="sa" password="#['']"/>
+  </db:config>
+  <apikit:config name="Orders_API" api="api/orders.raml" httpStatusVarName="httpStatus" outboundHeadersMapName="outboundHeaders">
+    <apikit:flow-mappings>
+      <apikit:flow-mapping resource="/orders" action="post" content-type="application/json" flow-ref="create-order"/>
+      <apikit:flow-mapping resource="/orders/{orderId}" action="get" flow-ref="get-order"/>
+    </apikit:flow-mappings>
+  </apikit:config>
+  <error-handler name="API_Errors">
+    <on-error-propagate type="APIKIT:BAD_REQUEST">
+      <set-variable variableName="httpStatus" value="#[400]"/>
+      <ee:transform>
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+      output application/json
+      ---
+      {error: "INVALID_REQUEST"}
+      ]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+    </on-error-propagate>
+    <on-error-propagate type="APIKIT:NOT_FOUND,APP:NOT_FOUND">
+      <set-variable variableName="httpStatus" value="#[404]"/>
+      <ee:transform>
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+      output application/json
+      ---
+      {error: "NOT_FOUND"}
+      ]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+    </on-error-propagate>
+    <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+      <set-variable variableName="httpStatus" value="#[405]"/>
+      <ee:transform>
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+      output application/json
+      ---
+      {error: "METHOD_NOT_ALLOWED"}
+      ]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+    </on-error-propagate>
+    <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+      <set-variable variableName="httpStatus" value="#[415]"/>
+      <ee:transform>
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+      output application/json
+      ---
+      {error: "UNSUPPORTED_MEDIA_TYPE"}
+      ]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+    </on-error-propagate>
+    <on-error-propagate type="APP:CONFLICT">
+      <set-variable variableName="httpStatus" value="#[409]"/>
+      <ee:transform>
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+      output application/json
+      ---
+      {error: "ORDER_CONFLICT"}
+      ]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+    </on-error-propagate>
+    <on-error-propagate type="HTTP:CONNECTIVITY,HTTP:TIMEOUT,HTTP:SERVICE_UNAVAILABLE">
+      <set-variable variableName="httpStatus" value="#[503]"/>
+      <ee:transform>
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+      output application/json
+      ---
+      {error: "DEPENDENCY_UNAVAILABLE"}
+      ]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+    </on-error-propagate>
+    <on-error-propagate type="ANY">
+      <set-variable variableName="httpStatus" value="#[500]"/>
+      <ee:transform>
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+      output application/json
+      ---
+      {error: "INTERNAL_ERROR"}
+      ]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+    </on-error-propagate>
+  </error-handler>
+  <flow name="prepare-api">
+    <http:listener config-ref="HTTP_Listener" path="/lab/setup" allowedMethods="POST"/>
+    <db:execute-ddl config-ref="Orders_DB">
+      <db:sql><![CDATA[CREATE TABLE IF NOT EXISTS accepted_orders (tenant_id VARCHAR(40), order_id VARCHAR(40), response CLOB NOT NULL, PRIMARY KEY(tenant_id,order_id))]]></db:sql>
+    </db:execute-ddl>
+    <db:delete config-ref="Orders_DB">
+      <db:sql><![CDATA[DELETE FROM accepted_orders]]></db:sql>
+    </db:delete>
+    <set-payload value="ready"/>
+  </flow>
+  <flow name="orders-api">
+    <http:listener config-ref="HTTP_Listener" path="/api/*" allowedMethods="GET,POST">
+      <http:response statusCode="#[vars.httpStatus default 200]"/>
+      <http:error-response statusCode="#[vars.httpStatus default 500]">
+        <http:body>#[payload]</http:body>
+      </http:error-response>
+    </http:listener>
+    <apikit:router config-ref="Orders_API"/>
+    <error-handler ref="API_Errors"/>
+  </flow>
+  <sub-flow name="price-order">
+    <set-variable variableName="command" value="#[payload]"/>
+    <http:request config-ref="Dependency_HTTP" method="GET" path="/catalogue" target="catalogue"/>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/java
+    var pricedLines = vars.command.items map (item) -> {
+      sku: item.sku,
+      qty: item.qty,
+      unitPrice: vars.catalogue[item.sku],
+      lineTotal: vars.catalogue[item.sku] * item.qty
+    }
+    ---
+    {
+      orderId: vars.command.orderId,
+      tenantId: vars.tenant,
+      currency: "USD",
+      items: pricedLines,
+      total: sum(pricedLines map (item) -> item.lineTotal),
+      state: "ACCEPTED"
+    }
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </sub-flow>
+  <flow name="create-order">
+    <set-variable variableName="tenant" value="#[&#x27;retailer-a&#x27;]"/>
+    <flow-ref name="price-order"/>
+    <set-variable variableName="order" value="#[payload]"/>
+    <db:select config-ref="Orders_DB" target="existing">
+      <db:sql><![CDATA[SELECT order_id FROM accepted_orders WHERE tenant_id = :tenant AND order_id = :id]]></db:sql>
+      <db:input-parameters><![CDATA[#[{tenant: vars.tenant, id: vars.order.orderId}]]]></db:input-parameters>
+    </db:select>
+    <choice><when expression="#[not isEmpty(vars.existing)]"><raise-error type="APP:CONFLICT" description="Order identity already exists"/></when></choice>
+    <db:insert config-ref="Orders_DB" target="insertResult">
+      <db:sql><![CDATA[INSERT INTO accepted_orders(tenant_id,order_id,response) VALUES (:tenant,:id,:response)]]></db:sql>
+      <db:input-parameters><![CDATA[#[{tenant: vars.tenant, id: vars.order.orderId, response: write(vars.order,"application/json")}]]]></db:input-parameters>
+    </db:insert>
+    <set-variable variableName="httpStatus" value="#[201]"/>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    vars.order
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </flow>
+  <flow name="get-order">
+    <set-variable variableName="tenant" value="#[&#x27;retailer-a&#x27;]"/>
+    <db:select config-ref="Orders_DB">
+      <db:sql><![CDATA[SELECT response AS "response" FROM accepted_orders WHERE tenant_id = :tenant AND order_id = :id]]></db:sql>
+      <db:input-parameters><![CDATA[#[{tenant: vars.tenant, id: attributes.uriParams.orderId}]]]></db:input-parameters>
+    </db:select>
+    <choice><when expression="#[isEmpty(payload)]"><raise-error type="APP:NOT_FOUND" description="No visible order"/></when></choice>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    read(payload[0].response as String, "application/json")
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </flow>
+</mule>

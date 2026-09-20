@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:http="http://www.mulesoft.org/schema/mule/http"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+  <http:listener-config name="HTTP_Listener">
+    <http:listener-connection host="127.0.0.1" port="18881"/>
+  </http:listener-config>
+  <flow name="hello-mule">
+    <http:listener config-ref="HTTP_Listener" path="/hello" allowedMethods="GET"/>
+    <set-payload value="Hello, Mule!"/>
+  </flow>
+  <flow name="inspect-request">
+    <http:listener config-ref="HTTP_Listener" path="/inspect/{orderId}" allowedMethods="POST"/>
+    <set-payload value="#[attributes.uriParams.orderId]"/>
+  </flow>
+  <flow name="replace-response-body">
+    <http:listener config-ref="HTTP_Listener" path="/replace" allowedMethods="POST"/>
+    <logger level="INFO" message="Inspect payload before Set Payload in the debugger"/>
+    <set-payload value="Request received"/>
+  </flow>
+</mule>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:http="http://www.mulesoft.org/schema/mule/http"
+    xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+      http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+  <global-property name="http.port" value="18881"/>
+  <http:listener-config name="HTTP_Listener">
+    <http:listener-connection host="127.0.0.1" port="${http.port}"/>
+  </http:listener-config>
+  <flow name="hello-mule">
+    <http:listener config-ref="HTTP_Listener" path="/hello" allowedMethods="GET"/>
+    <set-payload value="Hello, Mule!"/>
+  </flow>
+  <flow name="order-total">
+    <http:listener config-ref="HTTP_Listener" path="/summary" allowedMethods="POST"/>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    {orderId: payload.orderId, total: sum(payload.items map (item) -> item.price * item.qty)}
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </flow>
+  <flow name="keep-order-context">
+    <http:listener config-ref="HTTP_Listener" path="/context" allowedMethods="POST"/>
+    <set-variable variableName="orderId" value="#[payload.orderId]"/>
+    <set-payload value="lookup complete"/>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    {orderId: vars.orderId, lookup: payload}
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </flow>
+  <sub-flow name="calculate-total">
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    {orderId: payload.orderId, total: sum(payload.items map (item) -> item.price * item.qty)}
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </sub-flow>
+  <flow name="call-total">
+    <http:listener config-ref="HTTP_Listener" path="/total" allowedMethods="POST"/>
+    <flow-ref name="calculate-total"/>
+  </flow>
+  <sub-flow name="change-child-event">
+    <set-payload value="after"/>
+    <set-variable variableName="stage" value="#[&#x27;child&#x27;]"/>
+  </sub-flow>
+  <flow name="targeted-subflow">
+    <http:listener config-ref="HTTP_Listener" path="/target" allowedMethods="GET"/>
+    <set-payload value="before"/>
+    <set-variable variableName="stage" value="#[&#x27;caller&#x27;]"/>
+    <flow-ref name="change-child-event" target="childResult"/>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    {payload: payload, stage: vars.stage, result: vars.childResult}
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </flow>
+</mule>

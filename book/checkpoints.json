@@ -1,0 +1,280 @@
+[
+  {
+    "chapter": 1,
+    "slug": "hello",
+    "path": "checkpoints/01-hello",
+    "tests": false,
+    "deps": [
+      "http"
+    ]
+  },
+  {
+    "chapter": 2,
+    "slug": "event",
+    "path": "checkpoints/02-event",
+    "tests": false,
+    "deps": [
+      "http"
+    ]
+  },
+  {
+    "chapter": 3,
+    "slug": "one-response",
+    "path": "checkpoints/03-one-response",
+    "tests": false,
+    "deps": [
+      "http"
+    ]
+  },
+  {
+    "chapter": 4,
+    "slug": "order-lines",
+    "path": "checkpoints/04-order-lines",
+    "tests": false,
+    "deps": [
+      "http"
+    ]
+  },
+  {
+    "chapter": 5,
+    "slug": "context-and-subflows",
+    "path": "checkpoints/05-context-and-subflows",
+    "tests": false,
+    "deps": [
+      "http"
+    ]
+  },
+  {
+    "chapter": 6,
+    "slug": "first-tests",
+    "path": "checkpoints/06-first-tests",
+    "tests": true,
+    "deps": [
+      "http"
+    ]
+  },
+  {
+    "chapter": 7,
+    "slug": "request-contract",
+    "path": "checkpoints/07-request-contract",
+    "tests": false,
+    "deps": [
+      "http"
+    ]
+  },
+  {
+    "chapter": 8,
+    "slug": "error-boundaries",
+    "path": "checkpoints/08-error-boundaries",
+    "tests": false,
+    "deps": [
+      "http"
+    ]
+  },
+  {
+    "chapter": 9,
+    "slug": "http-dependency",
+    "path": "checkpoints/09-http-dependency",
+    "tests": false,
+    "deps": [
+      "http"
+    ]
+  },
+  {
+    "chapter": 10,
+    "slug": "enrichment-tests",
+    "path": "checkpoints/10-enrichment-tests",
+    "tests": true,
+    "deps": [
+      "http"
+    ]
+  },
+  {
+    "chapter": 11,
+    "slug": "database",
+    "path": "checkpoints/11-database",
+    "tests": false,
+    "deps": [
+      "http",
+      "db",
+      "h2"
+    ]
+  },
+  {
+    "chapter": 12,
+    "slug": "transactions",
+    "path": "checkpoints/12-transactions",
+    "tests": false,
+    "deps": [
+      "http",
+      "db",
+      "h2"
+    ]
+  },
+  {
+    "chapter": 13,
+    "slug": "apikit-contract",
+    "path": "checkpoints/13-apikit-contract",
+    "tests": false,
+    "deps": [
+      "http",
+      "apikit"
+    ]
+  },
+  {
+    "chapter": 14,
+    "slug": "local-order-api",
+    "path": "checkpoints/14-local-order-api",
+    "tests": false,
+    "deps": [
+      "http",
+      "db",
+      "h2",
+      "apikit"
+    ]
+  },
+  {
+    "chapter": 15,
+    "slug": "order-files",
+    "path": "checkpoints/15-order-files",
+    "tests": false,
+    "deps": [
+      "http",
+      "db",
+      "h2",
+      "apikit",
+      "file"
+    ]
+  },
+  {
+    "chapter": 16,
+    "slug": "sequential-and-scheduled",
+    "path": "checkpoints/16-sequential-and-scheduled",
+    "tests": false,
+    "deps": [
+      "http",
+      "db",
+      "h2",
+      "apikit",
+      "file"
+    ]
+  },
+  {
+    "chapter": 17,
+    "slug": "parallel-work",
+    "path": "checkpoints/17-parallel-work",
+    "tests": false,
+    "deps": [
+      "http",
+      "db",
+      "h2",
+      "apikit",
+      "file"
+    ]
+  },
+  {
+    "chapter": 18,
+    "slug": "retry-and-idempotency",
+    "path": "checkpoints/18-retry-and-idempotency",
+    "tests": false,
+    "deps": [
+      "http",
+      "db",
+      "h2",
+      "apikit",
+      "file"
+    ]
+  },
+  {
+    "chapter": 19,
+    "slug": "outbox",
+    "path": "checkpoints/19-outbox",
+    "tests": false,
+    "deps": [
+      "http",
+      "db",
+      "h2",
+      "apikit",
+      "file"
+    ]
+  },
+  {
+    "chapter": 20,
+    "slug": "async-and-queues",
+    "path": "checkpoints/20-async-and-queues",
+    "tests": false,
+    "deps": [
+      "http",
+      "db",
+      "h2",
+      "apikit",
+      "file",
+      "vm"
+    ]
+  },
+  {
+    "chapter": 21,
+    "slug": "batch-import",
+    "path": "checkpoints/21-batch-import",
+    "tests": false,
+    "deps": [
+      "http",
+      "db",
+      "h2",
+      "apikit",
+      "file",
+      "vm"
+    ]
+  },
+  {
+    "chapter": 22,
+    "slug": "cache-and-state",
+    "path": "checkpoints/22-cache-and-state",
+    "tests": false,
+    "deps": [
+      "http",
+      "db",
+      "h2",
+      "apikit",
+      "file",
+      "vm",
+      "os"
+    ]
+  },
+  {
+    "chapter": 23,
+    "slug": "order-ownership",
+    "path": "checkpoints/23-order-ownership",
+    "tests": false,
+    "deps": [
+      "http",
+      "db",
+      "h2",
+      "apikit"
+    ]
+  },
+  {
+    "chapter": 26,
+    "slug": "order-investigation",
+    "path": "checkpoints/26-order-investigation",
+    "tests": false,
+    "deps": [
+      "http",
+      "db",
+      "h2",
+      "apikit"
+    ]
+  },
+  {
+    "chapter": 30,
+    "slug": "recovery-capstone",
+    "path": "checkpoints/30-recovery-capstone",
+    "tests": false,
+    "deps": [
+      "http",
+      "db",
+      "h2",
+      "apikit"
+    ]
+  }
+]

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:http="http://www.mulesoft.org/schema/mule/http"
+    xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+      http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd">
+  <http:request-config name="Receiver_HTTP" responseTimeout="2000">
+    <http:request-connection host="${receiver.host}" port="${receiver.port}"/>
+  </http:request-config>
+  <anypoint-mq:config name="MQ_Config">
+    <anypoint-mq:connection url="${mq.url}" clientId="${mq.clientId}" clientSecret="${mq.clientSecret}"/>
+  </anypoint-mq:config>
+  <http:listener-config name="Publish_Listener"><http:listener-connection host="127.0.0.1" port="18886"/></http:listener-config>
+  <flow name="publish-order-event">
+    <http:listener config-ref="Publish_Listener" path="/events" allowedMethods="POST"/>
+    <anypoint-mq:publish config-ref="MQ_Config" destination="${mq.queue}">
+      <anypoint-mq:body>#[write(payload, 'application/json')]</anypoint-mq:body>
+    </anypoint-mq:publish>
+  </flow>
+  <flow name="consume-order-event">
+    <anypoint-mq:subscriber config-ref="MQ_Config" destination="${mq.queue}" acknowledgementMode="MANUAL"/>
+    <set-variable variableName="ackToken" value="#[attributes.ackToken]"/>
+    <http:request config-ref="Receiver_HTTP" method="POST" path="/events">
+      <http:body>#[output application/json --- read(payload, 'application/json')]</http:body>
+      <http:headers>#[{'Content-Type':'application/json'}]</http:headers>
+    </http:request>
+    <anypoint-mq:ack config-ref="MQ_Config" ackToken="#[vars.ackToken]"/>
+    <error-handler><on-error-propagate type="ANY"><logger level="ERROR" message="Event processing or acknowledgement failed"/></on-error-propagate></error-handler>
+  </flow>
+</mule>

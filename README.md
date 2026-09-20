@@ -1,6 +1,12 @@
 # MuleSoft orders companion
 
-Companion code for *Mule from Scratch* by Simon Sarkar. It is the local Mule application the book's local checks ran against: a small order lab with database, file, routing and DataWeave format examples, a Python harness that asserts fifteen responses, and a separate MUnit project with four tests. The follow-on book, *DataWeave in Depth*, has its own [companion](https://github.com/book-companion/dataweave-orders).
+## Progressive edition
+
+Start with [the book checkpoints](book/README.md) for the rewritten edition: a greeting, small transformations and tests, a complete local API, then recovery and platform workshops. The [example catalogue](book/EXAMPLES.md) follows the book's numbered reading order. New and historical results are separated in the [verification record](book/verification/2026-09-20.md).
+
+## Historical baseline — 13 September 2026
+
+Companion code for *MuleSoft from the Ground Up* by Simon Sarkar. It is the local Mule application the book's local checks ran against: a small order lab with database, file, routing and DataWeave format examples, a Python harness that asserts fifteen responses, and a separate MUnit project with four tests. The follow-on book, *DataWeave in Depth*, has its own [companion](https://github.com/book-companion/dataweave-orders).
 
 ## Requirements
 

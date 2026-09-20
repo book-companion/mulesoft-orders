@@ -1,0 +1,44 @@
+name: Book companion validation
+on:
+  push:
+    paths: ['book/**', '.github/workflows/book-validation.yml', 'settings.xml']
+  pull_request:
+    paths: ['book/**', '.github/workflows/book-validation.yml', 'settings.xml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - uses: stCarolas/setup-maven@v5
+        with:
+          maven-version: 3.9.4
+      - name: Check catalog and complete sources
+        run: python3 book/check_catalog.py
+      - name: Run the actual lesson MUnit suites
+        run: |
+          python3 book/run.py test 6
+          python3 book/run.py test 10
+          python3 book/check_reports.py
+      - name: Package the recovery candidate
+        run: |
+          python3 book/run.py package 30
+          python3 book/release_digest.py book/checkpoints/30-recovery-capstone/target/orders-learning-2.0.0-mule-application.jar
+      - name: Retain evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: book-validation-evidence
+          if-no-files-found: error
+          path: |
+            book/checkpoints/06-first-tests/target/surefire-reports/
+            book/checkpoints/10-enrichment-tests/target/surefire-reports/
+            book/checkpoints/30-recovery-capstone/target/*.jar
+            book/actual/release.json

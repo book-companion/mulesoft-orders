@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:http="http://www.mulesoft.org/schema/mule/http"
+    xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+      http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+  <configuration-properties file="config-local.yaml"/>
+  <http:listener-config name="HTTP_Listener">
+    <http:listener-connection host="${http.host}" port="${http.port}"/>
+  </http:listener-config>
+  <http:request-config name="Dependency_HTTP" responseTimeout="2000">
+    <http:request-connection host="${dependency.host}" port="${dependency.port}"/>
+  </http:request-config>
+  <flow name="retain-response-message">
+    <http:listener config-ref="HTTP_Listener" path="/message" allowedMethods="POST"/>
+    <http:request config-ref="Dependency_HTTP" method="GET" path="/customers/C-42"
+        target="customerReply" targetValue="#[message]"/>
+    <ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{orderId: payload.orderId, customer: vars.customerReply.payload.name,
+ upstreamStatus: vars.customerReply.attributes.statusCode}
+]]></ee:set-payload></ee:message></ee:transform>
+  </flow>
+  <flow name="normalize-xml-order">
+    <http:listener config-ref="HTTP_Listener" path="/xml" allowedMethods="POST"/>
+    <ee:transform><ee:message><ee:set-payload resource="normalize-xml.dwl"/></ee:message></ee:transform>
+  </flow>
+  <flow name="use-pricing-module">
+    <http:listener config-ref="HTTP_Listener" path="/module" allowedMethods="POST"/>
+    <ee:transform><ee:message><ee:set-payload resource="total.dwl"/></ee:message></ee:transform>
+  </flow>
+  <flow name="inspect-java-value">
+    <http:listener config-ref="HTTP_Listener" path="/java" allowedMethods="GET"/>
+    <ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{orderId: "A-1001", total: 32}
+]]></ee:set-payload></ee:message></ee:transform>
+    <ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{orderId: payload.orderId, total: payload.total, className: payload.^class}
+]]></ee:set-payload></ee:message></ee:transform>
+  </flow>
+</mule>

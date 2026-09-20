@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:http="http://www.mulesoft.org/schema/mule/http"
+    xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+    xmlns:db="http://www.mulesoft.org/schema/mule/db"
+    xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+      http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+      http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+      http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+      http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd">
+  <configuration-properties file="config-local.yaml"/>
+  <http:listener-config name="HTTP_Listener">
+    <http:listener-connection host="${http.host}" port="${http.port}"/>
+  </http:listener-config>
+  <http:request-config name="Dependency_HTTP" responseTimeout="2000">
+    <http:request-connection host="${dependency.host}" port="${dependency.port}"/>
+  </http:request-config>
+  <flow name="hello-mule">
+    <http:listener config-ref="HTTP_Listener" path="/hello" allowedMethods="GET"/>
+    <set-payload value="Hello, Mule!"/>
+  </flow>
+  <db:config name="Orders_DB">
+    <db:generic-connection url="jdbc:h2:file:${mule.home}/orders-data/orders-recovery;DB_CLOSE_ON_EXIT=FALSE"
+        driverClassName="org.h2.Driver" user="sa" password="#['']"/>
+  </db:config>
+  <apikit:config name="Orders_API" api="api/orders.raml" httpStatusVarName="httpStatus" outboundHeadersMapName="outboundHeaders">
+    <apikit:flow-mappings>
+      <apikit:flow-mapping resource="/orders" action="post" content-type="application/json" flow-ref="create-order"/>
+      <apikit:flow-mapping resource="/orders/{orderId}" action="get" flow-ref="get-order"/>
+    </apikit:flow-mappings>
+  </apikit:config>
+  <error-handler name="API_Errors">
+  <on-error-propagate type="APP:UNAUTHENTICATED">
+    <set-variable variableName="httpStatus" value="#[401]"/>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    {error: "UNAUTHENTICATED"}
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </on-error-propagate>
+    <on-error-propagate type="APIKIT:BAD_REQUEST">
+      <set-variable variableName="httpStatus" value="#[400]"/>
+      <ee:transform>
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+      output application/json
+      ---
+      {error: "INVALID_REQUEST"}
+      ]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+    </on-error-propagate>
+    <on-error-propagate type="APIKIT:NOT_FOUND,APP:NOT_FOUND">
+      <set-variable variableName="httpStatus" value="#[404]"/>
+      <ee:transform>
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+      output application/json
+      ---
+      {error: "NOT_FOUND"}
+      ]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+    </on-error-propagate>
+    <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+      <set-variable variableName="httpStatus" value="#[405]"/>
+      <ee:transform>
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+      output application/json
+      ---
+      {error: "METHOD_NOT_ALLOWED"}
+      ]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+    </on-error-propagate>
+    <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+      <set-variable variableName="httpStatus" value="#[415]"/>
+      <ee:transform>
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+      output application/json
+      ---
+      {error: "UNSUPPORTED_MEDIA_TYPE"}
+      ]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+    </on-error-propagate>
+    <on-error-propagate type="APP:CONFLICT">
+      <set-variable variableName="httpStatus" value="#[409]"/>
+      <ee:transform>
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+      output application/json
+      ---
+      {error: "ORDER_CONFLICT"}
+      ]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+    </on-error-propagate>
+    <on-error-propagate type="HTTP:CONNECTIVITY,HTTP:TIMEOUT,HTTP:SERVICE_UNAVAILABLE">
+      <set-variable variableName="httpStatus" value="#[503]"/>
+      <ee:transform>
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+      output application/json
+      ---
+      {error: "DEPENDENCY_UNAVAILABLE"}
+      ]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+    </on-error-propagate>
+    <on-error-propagate type="ANY">
+      <set-variable variableName="httpStatus" value="#[500]"/>
+      <ee:transform>
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+      output application/json
+      ---
+      {error: "INTERNAL_ERROR"}
+      ]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+    </on-error-propagate>
+  </error-handler>
+  <flow name="prepare-api">
+    <http:listener config-ref="HTTP_Listener" path="/lab/setup" allowedMethods="POST"/>
+    <db:execute-ddl config-ref="Orders_DB">
+      <db:sql><![CDATA[CREATE TABLE IF NOT EXISTS accepted_orders (tenant_id VARCHAR(40), order_id VARCHAR(40), response CLOB NOT NULL, PRIMARY KEY(tenant_id,order_id))]]></db:sql>
+    </db:execute-ddl>
+    <db:execute-ddl config-ref="Orders_DB">
+      <db:sql><![CDATA[CREATE TABLE IF NOT EXISTS request_results (tenant_id VARCHAR(40), request_key VARCHAR(40), fingerprint CLOB NOT NULL, response CLOB NOT NULL, PRIMARY KEY(tenant_id,request_key))]]></db:sql>
+    </db:execute-ddl>
+    <db:execute-ddl config-ref="Orders_DB">
+      <db:sql><![CDATA[CREATE TABLE IF NOT EXISTS outbox (event_id VARCHAR(100) PRIMARY KEY, body CLOB NOT NULL, sent BOOLEAN DEFAULT FALSE NOT NULL)]]></db:sql>
+    </db:execute-ddl>
+    <db:delete config-ref="Orders_DB">
+      <db:sql><![CDATA[DELETE FROM outbox]]></db:sql>
+    </db:delete>
+    <db:delete config-ref="Orders_DB">
+      <db:sql><![CDATA[DELETE FROM request_results]]></db:sql>
+    </db:delete>
+    <db:delete config-ref="Orders_DB">
+      <db:sql><![CDATA[DELETE FROM accepted_orders]]></db:sql>
+    </db:delete>
+    <set-payload value="ready"/>
+  </flow>
+  <flow name="orders-api">
+    <http:listener config-ref="HTTP_Listener" path="/api/*" allowedMethods="GET,POST">
+      <http:response statusCode="#[vars.httpStatus default 200]"/>
+      <http:error-response statusCode="#[vars.httpStatus default 500]">
+        <http:body>#[payload]</http:body>
+      </http:error-response>
+    </http:listener>
+    <flow-ref name="local-test-principal"/>
+      <apikit:router config-ref="Orders_API"/>
+    <error-handler ref="API_Errors"/>
+  </flow>
+  <sub-flow name="price-order">
+    <set-variable variableName="command" value="#[payload]"/>
+    <http:request config-ref="Dependency_HTTP" method="GET" path="/catalogue" target="catalogue"/>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/java
+    var pricedLines = vars.command.items map (item) -> {
+      sku: item.sku,
+      qty: item.qty,
+      unitPrice: vars.catalogue[item.sku],
+      lineTotal: vars.catalogue[item.sku] * item.qty
+    }
+    ---
+    {
+      orderId: vars.command.orderId,
+      tenantId: vars.tenant,
+      currency: "USD",
+      items: pricedLines,
+      total: sum(pricedLines map (item) -> item.lineTotal),
+      state: "ACCEPTED"
+    }
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </sub-flow>
+  <flow name="create-order">
+    <set-variable variableName="tenant" value="#[vars.principal.tenantId]"/>
+    <flow-ref name="accept-once"/>
+    <logger category="book.orders" level="INFO" message="#[write({event: if (vars.httpStatus == 201) 'order.accepted' else 'order.replayed', stage: 'committed', correlationId: correlationId, orderId: vars.result.orderId, tenantId: vars.tenant}, 'application/json', {indent: false})]"/>
+  </flow>
+  <flow name="get-order">
+    <set-variable variableName="tenant" value="#[vars.principal.tenantId]"/>
+    <db:select config-ref="Orders_DB">
+      <db:sql><![CDATA[SELECT response AS "response" FROM accepted_orders WHERE tenant_id = :tenant AND order_id = :id]]></db:sql>
+      <db:input-parameters><![CDATA[#[{tenant: vars.tenant, id: attributes.uriParams.orderId}]]]></db:input-parameters>
+    </db:select>
+    <choice><when expression="#[isEmpty(payload)]"><raise-error type="APP:NOT_FOUND" description="No visible order"/></when></choice>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    read(payload[0].response as String, "application/json")
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </flow>
+  <sub-flow name="recover-recorded-result">
+    <db:select config-ref="Orders_DB" target="previous">
+      <db:sql><![CDATA[SELECT fingerprint AS "fingerprint", response AS "response" FROM request_results WHERE tenant_id = :tenant AND request_key = :key]]></db:sql>
+      <db:input-parameters><![CDATA[#[{tenant: vars.tenant, key: vars.command.orderId}]]]></db:input-parameters>
+    </db:select>
+    <choice>
+      <when expression="#[isEmpty(vars.previous)]"><raise-error type="APP:PERSISTENCE" description="No committed result was recovered"/></when>
+      <when expression="#[(vars.previous[0].fingerprint as String) != vars.fingerprint]"><raise-error type="APP:CONFLICT" description="This order key was used with different content"/></when>
+    </choice>
+    <set-variable variableName="result" value="#[read(vars.previous[0].response as String, &quot;application/json&quot;)]"/>
+    <set-variable variableName="httpStatus" value="#[200]"/>
+  </sub-flow>
+  <sub-flow name="commit-order">
+    <try transactionalAction="ALWAYS_BEGIN" transactionType="LOCAL">
+      <db:insert config-ref="Orders_DB" target="claimResult" transactionalAction="ALWAYS_JOIN">
+        <db:sql><![CDATA[INSERT INTO request_results(tenant_id,request_key,fingerprint,response) VALUES (:tenant,:key,:fingerprint,:response)]]></db:sql>
+        <db:input-parameters><![CDATA[#[{tenant: vars.tenant, key: vars.command.orderId, fingerprint: vars.fingerprint, response: write(vars.order,"application/json")}]]]></db:input-parameters>
+      </db:insert>
+      <db:insert config-ref="Orders_DB" target="insertResult" transactionalAction="ALWAYS_JOIN">
+        <db:sql><![CDATA[INSERT INTO accepted_orders(tenant_id,order_id,response) VALUES (:tenant,:id,:response)]]></db:sql>
+        <db:input-parameters><![CDATA[#[{tenant: vars.tenant, id: vars.order.orderId, response: write(vars.order,"application/json")}]]]></db:input-parameters>
+      </db:insert>
+      <choice><when expression="#[vars.failAfterOrder default false]"><raise-error type="APP:INJECTED" description="Stop before commit"/></when></choice>
+      <db:insert config-ref="Orders_DB" target="outboxResult" transactionalAction="ALWAYS_JOIN">
+        <db:sql><![CDATA[INSERT INTO outbox(event_id,body,sent) VALUES (:id,:body,FALSE)]]></db:sql>
+        <db:input-parameters><![CDATA[#[{id: vars.tenant ++ ":" ++ vars.order.orderId ++ ":accepted-v1", body: write({eventId: vars.tenant ++ ":" ++ vars.order.orderId ++ ":accepted-v1", "type": "order.accepted", order: vars.order},"application/json")}]]]></db:input-parameters>
+      </db:insert>
+      <error-handler><on-error-propagate type="ANY"/></error-handler>
+    </try>
+  </sub-flow>
+  <sub-flow name="accept-once">
+    <set-variable variableName="command" value="#[payload]"/>
+    <set-variable variableName="fingerprint" value="#[write({orderId: payload.orderId, items: payload.items map (item) -> {sku: item.sku, qty: item.qty}}, 'application/json', {indent: false})]"/>
+    <db:select config-ref="Orders_DB" target="previous">
+      <db:sql><![CDATA[SELECT fingerprint AS "fingerprint", response AS "response" FROM request_results WHERE tenant_id = :tenant AND request_key = :key]]></db:sql>
+      <db:input-parameters><![CDATA[#[{tenant: vars.tenant, key: vars.command.orderId}]]]></db:input-parameters>
+    </db:select>
+    <choice>
+      <when expression="#[not isEmpty(vars.previous)]">
+        <choice>
+          <when expression="#[isEmpty(vars.previous)]"><raise-error type="APP:PERSISTENCE" description="No committed result was recovered"/></when>
+          <when expression="#[(vars.previous[0].fingerprint as String) != vars.fingerprint]"><raise-error type="APP:CONFLICT" description="This order key was used with different content"/></when>
+        </choice>
+        <set-variable variableName="result" value="#[read(vars.previous[0].response as String, &quot;application/json&quot;)]"/>
+        <set-variable variableName="httpStatus" value="#[200]"/>
+      </when>
+      <otherwise>
+        <flow-ref name="price-order"/>
+        <set-variable variableName="order" value="#[payload]"/>
+        <try>
+          <flow-ref name="commit-order"/>
+          <set-variable variableName="result" value="#[vars.order]"/>
+          <set-variable variableName="httpStatus" value="#[201]"/>
+          <error-handler>
+            <on-error-continue type="DB:QUERY_EXECUTION">
+              <flow-ref name="recover-recorded-result"/>
+            </on-error-continue>
+          </error-handler>
+        </try>
+      </otherwise>
+    </choice>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    vars.result
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </sub-flow>
+  <flow name="injected-acceptance">
+    <http:listener config-ref="HTTP_Listener" path="/lab/accept-failure" allowedMethods="POST">
+      <http:response statusCode="#[vars.httpStatus default 200]"/>
+      <http:error-response statusCode="#[vars.httpStatus default 500]">
+        <http:body>#[payload]</http:body>
+      </http:error-response>
+    </http:listener>
+    <set-variable variableName="tenant" value="#[&#x27;retailer-a&#x27;]"/>
+    <set-variable variableName="failAfterOrder" value="#[true]"/>
+    <flow-ref name="accept-once"/>
+    <error-handler><on-error-continue type="APP:INJECTED"><set-variable variableName="httpStatus" value="#[500]"/><ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    {error: "INJECTED_FAILURE"}
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform></on-error-continue></error-handler>
+  </flow>
+  <sub-flow name="dispatch-pending">
+    <db:select config-ref="Orders_DB">
+      <db:sql><![CDATA[SELECT event_id AS "eventId", body AS "body" FROM outbox WHERE sent = FALSE ORDER BY event_id LIMIT 10]]></db:sql>
+    </db:select>
+    <foreach>
+      <set-variable variableName="pending" value="#[payload]"/>
+      <http:request config-ref="Dependency_HTTP" method="POST" path="/events" target="receipt">
+        <http:body>#[output application/json --- read(vars.pending.body as String, 'application/json')]</http:body>
+        <http:headers>#[{'Content-Type': 'application/json'}]</http:headers>
+      </http:request>
+      <db:update config-ref="Orders_DB" target="marked">
+        <db:sql><![CDATA[UPDATE outbox SET sent = TRUE WHERE event_id = :id]]></db:sql>
+        <db:input-parameters><![CDATA[#[{id: vars.pending.eventId}]]]></db:input-parameters>
+      </db:update>
+    </foreach>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    {attempted: sizeOf(payload)}
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </sub-flow>
+  <flow name="dispatch-now">
+    <http:listener config-ref="HTTP_Listener" path="/lab/dispatch" allowedMethods="POST">
+      <http:response statusCode="#[vars.httpStatus default 200]"/>
+      <http:error-response statusCode="#[vars.httpStatus default 500]">
+        <http:body>#[payload]</http:body>
+      </http:error-response>
+    </http:listener>
+    <flow-ref name="dispatch-pending"/>
+    <error-handler><on-error-propagate type="HTTP:SERVICE_UNAVAILABLE,HTTP:CONNECTIVITY,HTTP:TIMEOUT">
+      <set-variable variableName="httpStatus" value="#[503]"/>
+      <ee:transform>
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+      output application/json
+      ---
+      {error: "PUBLICATION_UNCERTAIN"}
+      ]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+    </on-error-propagate></error-handler>
+  </flow>
+  <flow name="recovery-state">
+    <http:listener config-ref="HTTP_Listener" path="/lab/state" allowedMethods="GET"/>
+    <db:select config-ref="Orders_DB" target="orders">
+      <db:sql><![CDATA[SELECT COUNT(*) AS "orders" FROM accepted_orders]]></db:sql>
+    </db:select>
+    <db:select config-ref="Orders_DB" target="requests">
+      <db:sql><![CDATA[SELECT COUNT(*) AS "requests" FROM request_results]]></db:sql>
+    </db:select>
+    <db:select config-ref="Orders_DB" target="pending">
+      <db:sql><![CDATA[SELECT COUNT(*) AS "pending" FROM outbox WHERE sent = FALSE]]></db:sql>
+    </db:select>
+    <ee:transform>
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    {orders: vars.orders[0].orders, requests: vars.requests[0].requests, pending: vars.pending[0].pending}
+    ]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+  </flow>
+  <sub-flow name="local-test-principal">
+    <set-variable variableName="principal" value="#[{tenantId: p(&#x27;local.testTenant&#x27;)}]"/>
+    <flow-ref name="require-tenant"/>
+  </sub-flow>
+  <sub-flow name="require-tenant">
+    <choice>
+      <when expression="#[not ((vars.principal.tenantId default null) is String)]"><raise-error type="APP:UNAUTHENTICATED" description="Trusted tenant required"/></when>
+      <when expression="#[isEmpty(vars.principal.tenantId)]"><raise-error type="APP:UNAUTHENTICATED" description="Trusted tenant required"/></when>
+    </choice>
+  </sub-flow>
+  <flow name="read-as-other-tenant">
+    <http:listener config-ref="HTTP_Listener" path="/lab/tenant-b/orders/{orderId}" allowedMethods="GET">
+      <http:response statusCode="#[vars.httpStatus default 200]"/>
+      <http:error-response statusCode="#[vars.httpStatus default 500]">
+        <http:body>#[payload]</http:body>
+      </http:error-response>
+    </http:listener>
+    <set-variable variableName="principal" value="#[{tenantId: &#x27;retailer-b&#x27;}]"/>
+    <flow-ref name="get-order"/>
+    <error-handler ref="API_Errors"/>
+  </flow>
+  <flow name="reject-missing-principal">
+    <http:listener config-ref="HTTP_Listener" path="/lab/anonymous" allowedMethods="GET">
+      <http:response statusCode="#[vars.httpStatus default 200]"/>
+      <http:error-response statusCode="#[vars.httpStatus default 500]">
+        <http:body>#[payload]</http:body>
+      </http:error-response>
+    </http:listener>
+    <set-variable variableName="principal" value="#[{}]"/>
+    <flow-ref name="require-tenant"/>
+    <error-handler ref="API_Errors"/>
+  </flow>
+</mule>
